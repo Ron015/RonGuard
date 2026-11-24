@@ -185,25 +185,49 @@ private fun Tag(text: String, hue: Color) {
     )
 }
 
+/** Sheet row titles (slightly longer for Phone/Custom). */
+private val OPTION_TITLES = mapOf(
+    Upstream.Phone to R.string.dns_title_phone,
+    Upstream.Cloudflare to R.string.dns_name_cloudflare,
+    Upstream.CloudflareFamily to R.string.dns_name_cloudflare_family,
+    Upstream.Quad9 to R.string.dns_name_quad9,
+    Upstream.AdGuard to R.string.dns_name_adguard,
+    Upstream.AdGuardFamily to R.string.dns_name_adguard_family,
+    Upstream.AdGuardUnfiltered to R.string.dns_name_adguard_unfiltered,
+    Upstream.NextDNS to R.string.dns_name_nextdns,
+    Upstream.Mullvad to R.string.dns_name_mullvad,
+    Upstream.MullvadAdblock to R.string.dns_name_mullvad_adblock,
+    Upstream.CleanBrowsingFamily to R.string.dns_name_cleanbrowsing_family,
+    Upstream.CleanBrowsingAdult to R.string.dns_name_cleanbrowsing_adult,
+    Upstream.OpenDNSFamily to R.string.dns_name_opendns_family,
+    Upstream.Google to R.string.dns_name_google,
+    Upstream.ControlD to R.string.dns_name_controld,
+    Upstream.Custom to R.string.dns_title_custom,
+)
+
+/** Short names shown on the home DNS card. */
+private val UPSTREAM_NAMES = mapOf(
+    Upstream.Phone to R.string.dns_name_phone,
+    Upstream.Cloudflare to R.string.dns_name_cloudflare,
+    Upstream.CloudflareFamily to R.string.dns_name_cloudflare_family,
+    Upstream.Quad9 to R.string.dns_name_quad9,
+    Upstream.AdGuard to R.string.dns_name_adguard,
+    Upstream.AdGuardFamily to R.string.dns_name_adguard_family,
+    Upstream.AdGuardUnfiltered to R.string.dns_name_adguard_unfiltered,
+    Upstream.NextDNS to R.string.dns_name_nextdns,
+    Upstream.Mullvad to R.string.dns_name_mullvad,
+    Upstream.MullvadAdblock to R.string.dns_name_mullvad_adblock,
+    Upstream.CleanBrowsingFamily to R.string.dns_name_cleanbrowsing_family,
+    Upstream.CleanBrowsingAdult to R.string.dns_name_cleanbrowsing_adult,
+    Upstream.OpenDNSFamily to R.string.dns_name_opendns_family,
+    Upstream.Google to R.string.dns_name_google,
+    Upstream.ControlD to R.string.dns_name_controld,
+    Upstream.Custom to R.string.dns_name_custom,
+)
+
 @StringRes
-private fun optionTitle(u: Upstream) = when (u) {
-    Upstream.Phone -> R.string.dns_title_phone
-    Upstream.Cloudflare -> R.string.dns_name_cloudflare
-    Upstream.CloudflareFamily -> R.string.dns_name_cloudflare_family
-    Upstream.Quad9 -> R.string.dns_name_quad9
-    Upstream.AdGuard -> R.string.dns_name_adguard
-    Upstream.AdGuardFamily -> R.string.dns_name_adguard_family
-    Upstream.AdGuardUnfiltered -> R.string.dns_name_adguard_unfiltered
-    Upstream.NextDNS -> R.string.dns_name_nextdns
-    Upstream.Mullvad -> R.string.dns_name_mullvad
-    Upstream.MullvadAdblock -> R.string.dns_name_mullvad_adblock
-    Upstream.CleanBrowsingFamily -> R.string.dns_name_cleanbrowsing_family
-    Upstream.CleanBrowsingAdult -> R.string.dns_name_cleanbrowsing_adult
-    Upstream.OpenDNSFamily -> R.string.dns_name_opendns_family
-    Upstream.Google -> R.string.dns_name_google
-    Upstream.ControlD -> R.string.dns_name_controld
-    Upstream.Custom -> R.string.dns_title_custom
-}
+private fun optionTitle(u: Upstream): Int =
+    OPTION_TITLES[u] ?: R.string.dns_name_custom
 
 @Composable
 private fun optionTags(u: Upstream): List<Pair<Int, Color>> {
@@ -224,26 +248,8 @@ private fun optionTags(u: Upstream): List<Pair<Int, Color>> {
 }
 
 @Composable
-private fun upstreamName(u: Upstream) = stringResource(
-    when (u) {
-        Upstream.Phone -> R.string.dns_name_phone
-        Upstream.Cloudflare -> R.string.dns_name_cloudflare
-        Upstream.CloudflareFamily -> R.string.dns_name_cloudflare_family
-        Upstream.Quad9 -> R.string.dns_name_quad9
-        Upstream.AdGuard -> R.string.dns_name_adguard
-        Upstream.AdGuardFamily -> R.string.dns_name_adguard_family
-        Upstream.AdGuardUnfiltered -> R.string.dns_name_adguard_unfiltered
-        Upstream.NextDNS -> R.string.dns_name_nextdns
-        Upstream.Mullvad -> R.string.dns_name_mullvad
-        Upstream.MullvadAdblock -> R.string.dns_name_mullvad_adblock
-        Upstream.CleanBrowsingFamily -> R.string.dns_name_cleanbrowsing_family
-        Upstream.CleanBrowsingAdult -> R.string.dns_name_cleanbrowsing_adult
-        Upstream.OpenDNSFamily -> R.string.dns_name_opendns_family
-        Upstream.Google -> R.string.dns_name_google
-        Upstream.ControlD -> R.string.dns_name_controld
-        Upstream.Custom -> R.string.dns_name_custom
-    },
-)
+private fun upstreamName(u: Upstream) =
+    stringResource(UPSTREAM_NAMES[u] ?: R.string.dns_name_custom)
 
 /** One colour per provider, so the card reads at a glance; the phone's own DNS is amber (not private). */
 @Composable
