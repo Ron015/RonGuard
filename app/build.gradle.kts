@@ -6,13 +6,13 @@ plugins {
 }
 
 android {
-    namespace = "dev.warden"
+    namespace = "dev.ronguard"
     compileSdk {
         version = release(libs.versions.compileSdk.get().toInt()) { minorApiLevel = libs.versions.compileSdkMinor.get().toInt() }
     }
 
     defaultConfig {
-        applicationId = "dev.warden"
+        applicationId = "dev.ronguard"
         minSdk = libs.versions.minSdk.get().toInt()
         targetSdk = libs.versions.compileSdk.get().toInt()
         versionCode = 5

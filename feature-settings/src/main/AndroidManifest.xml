@@ -8,7 +8,7 @@
 
     <application>
         <service
-            android:name="dev.warden.settings.UpdateJob"
+            android:name="dev.ronguard.settings.UpdateJob"
             android:exported="false"
             android:permission="android.permission.BIND_JOB_SERVICE" />
     </application>

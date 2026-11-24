@@ -19,9 +19,9 @@ and rule precedence.
 
 ## Frame timing
 ```bash
-adb shell dumpsys gfxinfo dev.warden reset
+adb shell dumpsys gfxinfo dev.ronguard reset
 # use the app for 30 s
-adb shell dumpsys gfxinfo dev.warden
+adb shell dumpsys gfxinfo dev.ronguard
 ```
 
 ## Verifying traffic with PCAPdroid or Wireshark

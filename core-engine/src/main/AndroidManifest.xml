@@ -10,7 +10,7 @@
     <application>
         <!-- Exported so the system (the only holder of BIND_VPN_SERVICE) can start it for always-on VPN. -->
         <service
-            android:name="dev.warden.engine.WardenVpnService"
+            android:name="dev.ronguard.engine.RonGuardVpnService"
             android:exported="true"
             android:foregroundServiceType="systemExempted"
             android:permission="android.permission.BIND_VPN_SERVICE"
@@ -30,7 +30,7 @@
             android:process=":tor" />
 
         <service
-            android:name="dev.warden.engine.ProtectionTileService"
+            android:name="dev.ronguard.engine.ProtectionTileService"
             android:exported="true"
             android:icon="@drawable/ic_shield_check"
             android:label="@string/engine_tile"

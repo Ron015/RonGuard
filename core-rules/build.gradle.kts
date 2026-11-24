@@ -3,7 +3,7 @@ plugins {
 }
 
 android {
-    namespace = "dev.warden.rules"
+    namespace = "dev.ronguard.rules"
     compileSdk {
         version = release(libs.versions.compileSdk.get().toInt()) { minorApiLevel = libs.versions.compileSdkMinor.get().toInt() }
     }

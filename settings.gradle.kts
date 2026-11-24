@@ -14,7 +14,7 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "warden"
+rootProject.name = "RonGuard"
 
 include(
     ":app",

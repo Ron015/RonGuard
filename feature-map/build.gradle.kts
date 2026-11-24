@@ -4,7 +4,7 @@ plugins {
 }
 
 android {
-    namespace = "dev.warden.map"
+    namespace = "dev.ronguard.map"
     compileSdk {
         version = release(libs.versions.compileSdk.get().toInt()) { minorApiLevel = libs.versions.compileSdkMinor.get().toInt() }
     }

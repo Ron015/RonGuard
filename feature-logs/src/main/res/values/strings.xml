@@ -29,5 +29,17 @@
     <string name="log_clear_all">Clear all</string>
     <string name="log_clear_search">Clear search</string>
     <string name="log_deleted">Log entry deleted</string>
-    <string name="log_delete_hint">Long-press to delete</string>
+    <string name="log_selected_count">%1$d selected</string>
+    <string name="log_select_all">Select all</string>
+    <string name="log_delete_selected">Delete</string>
+    <string name="log_cancel_select">Cancel</string>
+    <string name="log_detail_host">Domain</string>
+    <string name="log_detail_target">Target / full address</string>
+    <string name="log_detail_kind">Type</string>
+    <string name="log_detail_status">Status</string>
+    <string name="log_detail_allowed">Allowed</string>
+    <string name="log_detail_failed">Failed</string>
+    <string name="log_detail_latency">Latency</string>
+    <string name="log_detail_bytes">Data</string>
+    <string name="log_detail_rules">Rules for this domain</string>
 </resources>

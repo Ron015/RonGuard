@@ -3,7 +3,7 @@
     <application>
         <!-- Shares the exported CSV with another app. Its own subclass: one app can declare FileProvider only once. -->
         <provider
-            android:name="dev.warden.logs.ExportFileProvider"
+            android:name="dev.ronguard.logs.ExportFileProvider"
             android:authorities="${applicationId}.exports"
             android:exported="false"
             android:grantUriPermissions="true">
