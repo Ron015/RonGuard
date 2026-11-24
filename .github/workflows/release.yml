@@ -20,7 +20,7 @@ jobs:
         run: echo "No WARDEN_KEYSTORE_BASE64 secret; skipping the signed build."
       - uses: actions/checkout@v4
         if: env.HAS_KEY == 'true'
-        - name: Grant execute permission for gradlew
+      - name: Grant execute permission for gradlew
         if: env.HAS_KEY == 'true'
         run: chmod +x gradlew
       - uses: actions/setup-java@v4
