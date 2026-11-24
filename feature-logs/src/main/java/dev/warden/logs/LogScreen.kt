@@ -52,7 +52,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Text
-import androidx.compose.material3.IconButton
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.runtime.Composable
@@ -90,12 +89,7 @@ import kotlinx.coroutines.delay
 import java.text.DateFormat
 import java.util.Date
 import dev.warden.design.R as DesignR
-import androidx.compose.foundation.layout.height
-import androidx.compose.ui.text.input.KeyboardType
-import java.util.Locale
 import androidx.compose.foundation.ExperimentalFoundationApi
-import android.widget.Toast
-import androidx.compose.ui.platform.LocalContext
 
 private enum class Filter(val label: Int, val keep: (NetEvent) -> Boolean) {
     All(R.string.log_filter_all, { true }),

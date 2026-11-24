@@ -36,11 +36,7 @@ internal fun RouteRow(uid: Int, name: String) {
     val c = Warden.colors
     val routes by Routing.routes.collectAsState()
     val wireGuard by Routing.wireGuard.collectAsState()
-    val servers by Routing.servers.collectAsState()
-    val appServers by Routing.appServer.collectAsState()
-    val selected by Routing.selected.collectAsState()
     val route = routes[uid] ?: Route.Direct
-    val pinnedServerId = appServers[uid]
 
     Row(Modifier.fillMaxWidth().heightIn(min = 48.dp), verticalAlignment = Alignment.CenterVertically) {
         Icon(
@@ -61,29 +57,40 @@ internal fun RouteRow(uid: Int, name: String) {
             Note(stringResource(R.string.route_vpn_all), warn = false)
         }
         Route.Tor -> TorStatus(name)
-        Route.Vpn -> {
-            if (servers.isEmpty()) {
-                Note(stringResource(R.string.route_vpn_missing, name), warn = true)
-            } else {
-                val effectiveId = pinnedServerId ?: selected
-                val server = servers.firstOrNull { it.id == effectiveId } ?: servers.first()
-                Note(stringResource(R.string.route_vpn_on, server.name.ifEmpty { server.config.endpoint }), warn = false)
-                // Per-app server picker when multiple profiles exist
-                if (servers.size > 1) {
-                    val labels = listOf(stringResource(R.string.route_vpn_default)) + servers.map { it.name.ifEmpty { it.config.endpoint } }
-                    val idx = if (pinnedServerId == null) 0 else (servers.indexOfFirst { it.id == pinnedServerId }.takeIf { it >= 0 }?.plus(1) ?: 0)
-                    SegmentedControl(
-                        labels,
-                        idx.coerceIn(0, labels.lastIndex),
-                        { i ->
-                            if (i == 0) Routing.setAppServer(uid, null)
-                            else Routing.setAppServer(uid, servers[i - 1].id)
-                        },
-                    )
-                }
-            }
-        }
+        Route.Vpn -> VpnStatus(uid, name)
     }
+}
+
+/** VPN route details and optional per-app server picker. */
+@Composable
+private fun VpnStatus(uid: Int, name: String) {
+    val servers by Routing.servers.collectAsState()
+    val appServers by Routing.appServer.collectAsState()
+    val selected by Routing.selected.collectAsState()
+    val pinnedServerId = appServers[uid]
+
+    if (servers.isEmpty()) {
+        Note(stringResource(R.string.route_vpn_missing, name), warn = true)
+        return
+    }
+    val effectiveId = pinnedServerId ?: selected
+    val server = servers.firstOrNull { it.id == effectiveId } ?: servers.first()
+    val label = server.name.ifEmpty { server.config.endpoint }
+    Note(stringResource(R.string.route_vpn_on, label), warn = false)
+    if (servers.size <= 1) return
+
+    val labels = listOf(stringResource(R.string.route_vpn_default)) +
+        servers.map { it.name.ifEmpty { it.config.endpoint } }
+    val pinnedIndex = servers.indexOfFirst { it.id == pinnedServerId }
+    val idx = if (pinnedServerId == null || pinnedIndex < 0) 0 else pinnedIndex + 1
+    SegmentedControl(
+        labels,
+        idx.coerceIn(0, labels.lastIndex),
+        { i ->
+            if (i == 0) Routing.setAppServer(uid, null)
+            else Routing.setAppServer(uid, servers[i - 1].id)
+        },
+    )
 }
 
 /** Tor runs inside Warden; until it has connected, this app stays offline rather than going direct. */
