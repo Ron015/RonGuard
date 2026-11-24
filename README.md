@@ -1,0 +1,172 @@
+<p align="center"><img src="docs/banner.png" alt="RonGuard: a no-root Android firewall" width="100%"></p>
+
+<h1 align="center">RonGuard</h1>
+
+<p align="center">
+  A free, open-source firewall for Android that needs no root.<br>
+  See which apps talk to which servers, block any app or tracker. Everything stays on your phone.
+</p>
+
+<p align="center">
+  <a href="https://github.com/Ron015/ronguard/releases/latest"><b>⬇️ Download the latest APK</b></a>
+  &nbsp;·&nbsp;
+  <a href="https://github.com/Ron015/ronguard/releases">All releases</a>
+  &nbsp;·&nbsp;
+  <a href="#privacy-promise">Privacy promise</a>
+</p>
+
+<p align="center">
+  <a href="https://github.com/Ron015/ronguard/releases/latest"><img alt="release" src="https://img.shields.io/github/v/release/Ron015/ronguard?include_prereleases&label=release&color=e05d44"></a>
+  <img alt="platform Android" src="https://img.shields.io/badge/platform-Android-3DDC84?logo=android&logoColor=white">
+  <img alt="minSdk 26" src="https://img.shields.io/badge/minSdk-26-555">
+  <img alt="Kotlin 2.4" src="https://img.shields.io/badge/Kotlin-2.4-7F52FF?logo=kotlin&logoColor=white">
+  <img alt="Jetpack Compose" src="https://img.shields.io/badge/Jetpack%20Compose-Material%203-4285F4?logo=jetpackcompose&logoColor=white">
+  <a href="LICENSE"><img alt="license GPL-3.0" src="https://img.shields.io/badge/license-GPL--3.0-e05d44"></a>
+  <img alt="root not needed" src="https://img.shields.io/badge/root-not%20needed-1F6F5B">
+  <img alt="ads none" src="https://img.shields.io/badge/ads-none-1F6F5B">
+  <img alt="trackers none" src="https://img.shields.io/badge/trackers-none-1F6F5B">
+  <br>
+  <a href="https://github.com/Ron015/ronguard/releases"><img alt="downloads" src="https://img.shields.io/github/downloads/Ron015/ronguard/total?color=e05d44"></a>
+</p>
+
+<!-- Demo GIF goes here: an app contacting trackers, then a blocked connection. -->
+
+## Features
+
+**Block what you want**
+- **Cut any app off the internet**, separately on Wi-Fi and mobile data. Every installed app is listed, so you can block one before it ever connects.
+- **Lockdown**: one tap on Home and only the apps you allow can go online, including apps installed later. The notification says when it's on.
+- **Block or allow single domains**, for one app or for every app, straight from the live log, the app's page, the map or the blocked list.
+- **Blocklists** for ads, trackers and malware (HaGeZi, StevenBlack, OISD), or **add your own** by https address. Downloaded and refreshed on your phone.
+- **See what was blocked**: every blocked domain with how often, how many apps tried it and when, for today, 7 or 30 days. Allow or block any of them everywhere in one tap.
+- **Skip RonGuard** for apps you trust, so their traffic doesn't go through it at all.
+- **No sneaking around it**: apps can't dodge your rules with their own DNS servers, DNS-over-HTTPS or DNS-over-TLS.
+
+**Route apps your way**
+- **Tor, built in**: send any app through Tor with no other app to install. Its lookups go through Tor too, and it stays offline rather than going direct if Tor isn't up.
+- **Your own VPN (WireGuard)**: add servers from a provider's `.conf` file, by scanning its QR code, or by typing the details in. Keep one per country and switch with a tap; flags show where each server is.
+- **Per app or for everything**: pick Direct, Tor or Your VPN for each app, or send every app through your VPN. The VPN screen shows which apps go where.
+
+**See what your apps do**
+- **Live log** of every lookup and connection, with the app, time, and whether it was blocked. **Export** it as CSV to share or save.
+- **Where it went**: a 3D globe of the countries your traffic reached, filtered by app, time span, blocked or trackers. CDN edges are labelled as such.
+- **Per-app pages**: connections, domains, trackers, recent activity, data used and a shortcut to that app on the map.
+- **Tracker companies**: "your apps contacted 26 trackers from 9 companies today", grouped by company and purpose.
+- **Privacy report cards**: an A–F grade per app with the working shown, shareable as an image.
+- **Data usage per app**, split by Wi-Fi and mobile, even while RonGuard is off (with Android's Usage access).
+- **30 days of history** stored on your phone, with Today / 7 days / 30 days views.
+
+**DNS and network**
+- **Encrypted DNS**: send lookups to Cloudflare, Quad9 or your own DNS-over-HTTPS server, so your Wi-Fi or carrier can't read them.
+- **Private DNS warning** when Android's own setting would bypass RonGuard, with a link to fix it.
+- **Survives network changes**, rebuilding itself when you move between IPv4-only and IPv6 networks.
+- **Quick Settings tile** to turn protection on or off from the notification shade.
+- **Update alerts**: a daily check for a new release on GitHub (switch it off in Settings).
+
+**Built to be light and private**
+- No account, no analytics, no ads, no cloud. Nothing about your traffic leaves the phone.
+- Screens pause their work in the background and history is written in batches, to keep battery use low.
+
+## Screenshots
+
+| Home | Apps | App detail |
+|:---:|:---:|:---:|
+| <img src="docs/screenshots/home.jpg" width="240" alt="Home: protection, DNS, lockdown, today's stats and tools"> | <img src="docs/screenshots/apps.jpg" width="240" alt="Apps: search, filters and every app's activity"> | <img src="docs/screenshots/detail.jpg" width="240" alt="App detail: grade, map, stats, data and access"> |
+| **Where it went** | **Live log** | **Data** |
+| <img src="docs/screenshots/map.jpg" width="240" alt="Globe of where traffic went, by country"> | <img src="docs/screenshots/log.jpg" width="240" alt="Live log of lookups and connections, with export"> | <img src="docs/screenshots/data.jpg" width="240" alt="Data used per app, Wi-Fi and mobile"> |
+| **Your VPN** | **Blocklists** | **Trackers** |
+| <img src="docs/screenshots/vpn.jpg" width="240" alt="Your VPN: server, apps through the VPN and through Tor"> | <img src="docs/screenshots/blocklists.jpg" width="240" alt="Blocklists, custom lists and what was blocked"> | <img src="docs/screenshots/trackers.png" width="240" alt="Tracking companies and their domains"> |
+| **Report card** | **Settings** | |
+| <img src="docs/screenshots/report.png" width="240" alt="Shareable privacy report card"> | <img src="docs/screenshots/settings.jpg" width="240" alt="Settings: rules, lockdown, DNS"> | |
+
+## How it works
+
+```mermaid
+flowchart LR
+    A[Apps] -->|all traffic| T[Local VPN interface]
+    T --> F[firestack engine<br/>TCP/UDP + DNS]
+    F -->|flow / DNS query| W[RonGuard rules<br/>per-app, per-domain, blocklists]
+    W -->|allow| N[Internet]
+    W -->|Tor or your VPN| P[Tor / WireGuard] --> N
+    W -->|block| X[Refused / sinkholed]
+    F --> L[Live log, apps, globe]
+```
+
+1. Android routes app traffic into a virtual network interface that RonGuard owns. Nothing is sent to
+   a remote server: it is a *local* VPN.
+2. The [firestack](https://github.com/celzero/firestack) engine (MPL-2.0) runs the TCP/IP stack and
+   DNS, and asks RonGuard about every DNS query and every new connection.
+3. RonGuard decides with one precedence order: your per-app rule for that domain, then the app's
+   Wi-Fi/mobile rule, then your global rule, then your enabled blocklists, then allow.
+4. Blocked lookups are sinkholed and blocked connections refused. Everything else goes out as normal,
+   or through Tor or your WireGuard server for apps you route there.
+
+## Privacy promise
+
+- No account, no analytics, no automatic crash reporting, no ads, no cloud. After a crash, a report stays
+  on your phone until you choose to copy it.
+- RonGuard's own network calls: a daily update check to GitHub (on by default, can be switched off),
+  blocklists you switch on, lookups to the DNS server you pick, and Tor or your WireGuard server only for
+  apps you route there.
+- RonGuard never decrypts HTTPS. It sees *where* apps connect (domain, IP, port), never *what* they send.
+- IP-to-country lookups use an offline database bundled in the app. History stays on the phone and can
+  be cleared from Settings.
+
+Full details: [Privacy policy](PRIVACY.md) · [Terms of use](TERMS.md)
+
+## Honest limitations
+
+- **No HTTPS inspection**, by design. RonGuard sees destinations, not content.
+- **One VPN at a time.** Android allows a single VPN app, so RonGuard can't run alongside another VPN app.
+  Use **Your VPN** inside RonGuard instead: it supports WireGuard (not OpenVPN).
+- **Tor is slower** than a direct connection or a VPN, and the first connection can take half a minute.
+  It carries TCP only, so a Tor app's UDP (mostly QUIC) is refused and the app falls back to TCP.
+- **Encrypted Client Hello (ECH)** will gradually hide the domain in TLS handshakes; DNS-based
+  blocking still works, but some connections will only show an IP.
+- **Strict Private DNS** (a hostname set in system settings) bypasses RonGuard's DNS. The app detects
+  it and shows how to switch to Automatic or Off.
+- **Aggressive battery savers** (Xiaomi, Oppo, vivo, Samsung and others) can kill background apps.
+  Set RonGuard's battery usage to Unrestricted; onboarding links to the setting.
+- Locations are country-level and approximate; anycast services often answer from a nearby server.
+
+## How RonGuard differs from Rethink and TrackerControl
+
+[Rethink](https://github.com/celzero/rethink-app) and [TrackerControl](https://github.com/TrackerControl/tracker-control-android)
+are mature, capable tools, and RonGuard stands on Rethink's engine. RonGuard's focus is different:
+
+- **Explainability first.** Plain sentences ("Chrome made 42 connections to 18 domains; 2 were
+  blocked") instead of raw tables.
+- **A modern, calm UI**: per-app detail with expandable domains, a live globe with per-app filtering,
+  and one-tap rules from anywhere a domain appears.
+- **Small, documented codebase** meant to be read and contributed to.
+
+## Build
+
+Requirements: JDK 17, Android SDK with platform 37.2 (built-in Tor needs it).
+
+```bash
+./gradlew assembleDebug        # debug APK
+./gradlew assembleRelease      # optimized APK (debug-signed unless release signing env vars are set)
+./gradlew detekt testDebugUnitTest
+```
+
+Release signing uses `WARDEN_KEYSTORE`, `WARDEN_KEYSTORE_PASSWORD`, `WARDEN_KEY_ALIAS` and
+`WARDEN_KEY_PASSWORD`. See `.github/workflows/release.yml`.
+
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) and the [Code of Conduct](CODE_OF_CONDUCT.md).
+Good first issues are listed in [docs/good-first-issues.md](docs/good-first-issues.md).
+
+## Roadmap
+
+- Learning mode: suggestions like "Instagram contacted 3 trackers this week; block them?"
+- Screen-off blocking and new-app alerts
+- Home-screen widget and scheduled rules
+- Backup and restore of rules
+- A different VPN server per app
+
+## License
+
+GPL-3.0. See [LICENSE](LICENSE). Third-party components and data are listed in
+[docs/licenses.md](docs/licenses.md).

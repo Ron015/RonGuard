@@ -1,0 +1,15 @@
+<resources>
+    <string name="engine_session">RonGuard</string>
+    <string name="engine_channel">Protection status</string>
+    <string name="engine_notif_title">RonGuard is on</string>
+    <string name="engine_notif_lockdown">Lockdown is on</string>
+    <string name="engine_notif_text">Watching your apps\' connections, on this phone only.</string>
+    <plurals name="engine_notif_blocked">
+        <item quantity="one">%d connection blocked since RonGuard started.</item>
+        <item quantity="other">%d connections blocked since RonGuard started.</item>
+    </plurals>
+    <string name="engine_notif_stop">Stop</string>
+    <string name="engine_tile">Protection</string>
+    <string name="engine_tile_on">On</string>
+    <string name="engine_tile_off">Off</string>
+</resources>

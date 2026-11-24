@@ -1,0 +1,146 @@
+<resources>
+    <string name="apps_title">Apps</string>
+    <string name="apps_back">Back to apps</string>
+    <plurals name="apps_summary">
+        <item quantity="one">%d app connected recently. Tap one for details.</item>
+        <item quantity="other">%d apps connected recently. Tap one for details.</item>
+    </plurals>
+    <plurals name="apps_connections">
+        <item quantity="one">%d connection</item>
+        <item quantity="other">%d connections</item>
+    </plurals>
+    <plurals name="apps_domains">
+        <item quantity="one">%d domain</item>
+        <item quantity="other">%d domains</item>
+    </plurals>
+    <plurals name="apps_lookups">
+        <item quantity="one">%d lookup</item>
+        <item quantity="other">%d lookups</item>
+    </plurals>
+    <plurals name="apps_blocked">
+        <item quantity="one">%d blocked</item>
+        <item quantity="other">%d blocked</item>
+    </plurals>
+    <string name="apps_empty_title">Your apps line up here</string>
+    <string name="apps_empty_body">Turn RonGuard on and every app that connects gets a row, busiest first.</string>
+
+    <string name="apps_last_seen">Last seen %1$s</string>
+    <string name="apps_detail_summary">%1$s made %2$s to %3$s recently.</string>
+    <plurals name="apps_detail_blocked">
+        <item quantity="one">%d of them was blocked.</item>
+        <item quantity="other">%d of them were blocked.</item>
+    </plurals>
+    <string name="apps_detail_none_blocked">Nothing was blocked.</string>
+    <string name="apps_detail_data">About %1$s moved in total.</string>
+    <string name="apps_sq_connections">Connects</string>
+    <string name="apps_sq_domains">Domains</string>
+    <string name="apps_sq_blocked">Blocked</string>
+    <string name="apps_activity">Activity · last 5 min</string>
+    <string name="apps_activity_none">Nothing in the last five minutes.</string>
+    <string name="apps_domains_label">Domains · tap one to see connections and block it</string>
+    <string name="apps_expanded">Expanded</string>
+    <string name="apps_collapsed">Collapsed</string>
+    <string name="apps_blocked_word">Blocked</string>
+    <string name="apps_wifi">Wi-Fi</string>
+    <string name="apps_cellular">Mobile data</string>
+    <string name="apps_wifi_for">Wi-Fi access for %1$s</string>
+    <string name="apps_cellular_for">Mobile data access for %1$s</string>
+    <string name="apps_skip">Skip RonGuard</string>
+    <string name="apps_skip_on">Bypasses the VPN · not filtered or logged</string>
+    <string name="apps_skip_off">Filtered by RonGuard</string>
+    <string name="apps_skip_for">Skip RonGuard for %1$s</string>
+    <string name="apps_allowed">Allowed</string>
+    <string name="apps_more">+%1$d more</string>
+    <string name="rule_default">Default</string>
+    <string name="rule_allow_here">Allow for this app</string>
+    <string name="rule_block_here">Block for this app</string>
+    <string name="rule_allow_everywhere">Allow everywhere</string>
+    <string name="rule_block_everywhere">Block everywhere</string>
+    <string name="apps_trackers">Trackers</string>
+    <string name="apps_trackers_none">No known trackers in this app\'s recent traffic.</string>
+    <string name="apps_trackers_sentence">Contacted %1$s from %2$s.</string>
+    <plurals name="apps_n_trackers">
+        <item quantity="one">%d tracker</item>
+        <item quantity="other">%d trackers</item>
+    </plurals>
+    <plurals name="apps_n_companies">
+        <item quantity="one">%d company</item>
+        <item quantity="other">%d companies</item>
+    </plurals>
+    <string name="report_open">Privacy report card</string>
+    <string name="report_share">Share report card</string>
+    <string name="report_formula">How the grade works</string>
+    <string name="report_kicker">Privacy report · last 7 days</string>
+    <plurals name="report_connections">
+        <item quantity="one">connect</item>
+        <item quantity="other">connects</item>
+    </plurals>
+    <plurals name="report_companies">
+        <item quantity="one">tracker company</item>
+        <item quantity="other">tracker companies</item>
+    </plurals>
+    <string name="report_blocked">blocked</string>
+    <string name="report_footer">Score %1$d / 100 · checked on-device by RonGuard</string>
+    <string name="report_share_text">%1$s\'s privacy report from RonGuard</string>
+    <string name="apps_access_label">Network access</string>
+    <string name="report_row_title">Privacy grade %1$s</string>
+    <string name="report_row_body">See the report card and how it was scored</string>
+    <string name="report_start">Every app starts at</string>
+    <plurals name="report_line_companies">
+        <item quantity="one">%d tracker company (9 each, up to 6)</item>
+        <item quantity="other">%d tracker companies (9 each, up to 6)</item>
+    </plurals>
+    <string name="report_line_trackers">%1$d%% of its traffic went to trackers</string>
+    <string name="report_line_screen_off">%1$d%% happened with the screen off</string>
+    <string name="report_line_score">Score, grade %1$s</string>
+    <string name="report_bands">A 90 and up · B 80 · C 65 · D 50 · F below 50. Covers the last 7 days and only what RonGuard can see on this phone.</string>
+    <string name="apps_section_overview">Overview</string>
+    <string name="apps_section_data">Data used</string>
+    <string name="apps_range_today">Today</string>
+    <string name="apps_range_week">7 days</string>
+    <string name="apps_range_month">30 days</string>
+    <string name="apps_data_networks">Last 30 days: Wi-Fi %1$s · Mobile %2$s</string>
+    <string name="apps_data_warden_only">Counted only while RonGuard was on. Allow Usage access on the Data screen to count it all the time.</string>
+    <string name="apps_domains_title">Domains · %1$d</string>
+    <string name="apps_domains_hint">Tap one to see its connections or block it.</string>
+    <plurals name="apps_summary_all">
+        <item quantity="one">%d app can go online. Tap one to see or limit it.</item>
+        <item quantity="other">%d apps can go online. Tap one to see or limit it.</item>
+    </plurals>
+    <string name="apps_search">Search apps</string>
+    <string name="apps_filter_active">Active</string>
+    <string name="apps_filter_all">All apps</string>
+    <string name="apps_filter_ruled">With rules</string>
+    <string name="apps_no_traffic">No traffic yet</string>
+    <string name="apps_none_match">No apps here</string>
+    <string name="apps_none_match_body">Try another name, or switch to All apps.</string>
+    <string name="apps_rule_offline">Offline</string>
+    <string name="apps_rule_no_wifi">No Wi-Fi</string>
+    <string name="apps_rule_no_mobile">No mobile</string>
+    <string name="apps_rule_skipped">Skips RonGuard</string>
+    <string name="report_row_short">Report card</string>
+    <string name="apps_see_on_map">Map</string>
+    <string name="apps_see_on_map_body">Where it goes</string>
+    <string name="report_tile_title">Grade %1$s</string>
+    <string name="apps_data_wifi">Wi-Fi · 30 days</string>
+    <string name="apps_data_mobile">Mobile · 30 days</string>
+    <string name="report_tile_none">No grade</string>
+    <string name="report_tile_none_body">No traffic yet</string>
+    <string name="apps_lockdown">In lockdown</string>
+    <string name="apps_lockdown_for">Allow %1$s while lockdown is on</string>
+    <string name="route_title">Send traffic</string>
+    <string name="route_direct">Direct</string>
+    <string name="route_tor">Tor</string>
+    <string name="route_vpn">Your VPN</string>
+    <string name="route_vpn_all">Your VPN is on for all apps, so this app uses it too.</string>
+    <string name="route_vpn_missing">Add your WireGuard config in Settings first. Until then %1$s stays offline instead of going direct.</string>
+    <string name="route_vpn_on">Through your WireGuard server at %1$s.</string>
+    <string name="route_vpn_default">Default server</string>
+    <string name="app_dns_title">DNS for this app</string>
+    <string name="app_dns_global">Use global DNS</string>
+    <string name="tor_on">Through Tor. Websites see a Tor address, not yours.</string>
+    <string name="tor_connecting">Connecting to Tor… %1$s stays offline until it\'s connected. The first time can take half a minute.</string>
+    <string name="tor_when_on">Tor starts when protection is on.</string>
+    <string name="tor_failed">Tor couldn\'t start, so %1$s is offline. Try again, or set it to Direct.</string>
+    <string name="tor_retry">Try again</string>
+</resources>

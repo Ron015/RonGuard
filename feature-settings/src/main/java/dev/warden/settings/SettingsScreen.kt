@@ -1,0 +1,396 @@
+package dev.warden.settings
+
+import androidx.compose.ui.platform.LocalContext
+import android.net.Uri
+import android.content.Intent
+import android.content.Context
+import dev.warden.design.ScreenTitle
+import android.text.format.DateUtils
+import androidx.activity.compose.BackHandler
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.clickable
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.semantics.Role
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
+import dev.warden.design.IconBadge
+import dev.warden.design.ButtonKind
+import dev.warden.design.WardenButton
+import dev.warden.data.History
+import androidx.compose.material3.AlertDialog
+import dev.warden.design.Motion
+import dev.warden.design.SectionLabel
+import dev.warden.design.SegmentedControl
+import dev.warden.design.BarSpacer
+import dev.warden.design.Spacing
+import dev.warden.design.StatSquare
+import dev.warden.design.ThemeMode
+import dev.warden.design.Tile
+import dev.warden.design.Warden
+import dev.warden.design.WardenSwitch
+import dev.warden.rules.AppRules
+import dev.warden.rules.BlocklistSource
+import dev.warden.rules.BlocklistState
+import dev.warden.rules.Blocklists
+import dev.warden.rules.Rules
+import java.text.NumberFormat
+import dev.warden.design.R as DesignR
+
+/** Settings home plus the "Your rules" page it opens. DNS and retention settings land in Milestone 7. */
+@Composable
+fun SettingsScreen(
+    version: String,
+    themeMode: ThemeMode,
+    onThemeMode: (ThemeMode) -> Unit,
+    onReplayIntro: () -> Unit,
+    appLabel: (Int) -> String,
+    appIcon: (Int) -> ImageBitmap?,
+    modifier: Modifier = Modifier,
+) {
+    var showRules by rememberSaveable { mutableStateOf(false) }
+    BackHandler(enabled = showRules) { showRules = false }
+    val reduceMotion = Warden.reduceMotion
+    AnimatedContent(
+        showRules,
+        modifier.fillMaxSize(),
+        transitionSpec = {
+            val dir = if (targetState) 1 else -1
+            if (reduceMotion) {
+                fadeIn(Motion.emphasized(0)) togetherWith fadeOut(Motion.emphasized(0))
+            } else {
+                (slideInHorizontally(Motion.emphasized(Motion.LONG)) { dir * it / 6 } + fadeIn(Motion.emphasized(Motion.LONG)))
+                    .togetherWith(
+                        slideOutHorizontally(Motion.emphasized(Motion.LONG)) { -dir * it / 8 } +
+                            fadeOut(Motion.emphasized(Motion.SHORT)),
+                    )
+            }
+        },
+        label = "settings",
+    ) { rules ->
+        if (rules) {
+            RulesScreen(appLabel, appIcon, onBack = { showRules = false })
+        } else {
+            SettingsHome(version, themeMode, onThemeMode, onReplayIntro, onOpenRules = { showRules = true })
+        }
+    }
+}
+
+@Composable
+private fun SettingsHome(
+    version: String,
+    themeMode: ThemeMode,
+    onThemeMode: (ThemeMode) -> Unit,
+    onReplayIntro: () -> Unit,
+    onOpenRules: () -> Unit,
+) {
+    val c = Warden.colors
+    val appRules by AppRules.rules.collectAsState()
+    val excluded by AppRules.excluded.collectAsState()
+    val domains by Rules.domains.collectAsState()
+    val lists by Blocklists.states.collectAsState()
+
+    Column(
+        Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = Spacing.xl),
+        verticalArrangement = Arrangement.spacedBy(Spacing.s),
+    ) {
+        ScreenTitle(stringResource(R.string.settings_title_sans), Modifier.padding(top = Spacing.s, bottom = Spacing.m))
+
+        // Rules overview first: it's what people come here for.
+        Tile(Modifier.fillMaxWidth(), onClick = onOpenRules) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Column(Modifier.weight(1f)) {
+                    Text(stringResource(R.string.settings_rules), style = Warden.type.title)
+                    Text(stringResource(R.string.settings_rules_body), style = Warden.type.label, color = c.muted)
+                }
+                Icon(painterResource(DesignR.drawable.ph_caret_right), null, Modifier.size(18.dp), tint = c.muted)
+            }
+            Row(horizontalArrangement = Arrangement.spacedBy(Spacing.s)) {
+                StatSquare(
+                    DesignR.drawable.ph_prohibit,
+                    c.blocked,
+                    appRules.size,
+                    stringResource(R.string.settings_sq_apps),
+                    Modifier.weight(1f),
+                )
+                StatSquare(
+                    DesignR.drawable.ph_globe_hemisphere_west,
+                    c.palette[4],
+                    domains.size,
+                    stringResource(R.string.settings_sq_domains),
+                    Modifier.weight(1f),
+                )
+                StatSquare(
+                    DesignR.drawable.ph_eye_slash_light,
+                    c.palette[2],
+                    excluded.size,
+                    stringResource(R.string.settings_sq_skipped),
+                    Modifier.weight(1f),
+                )
+                StatSquare(
+                    DesignR.drawable.ph_shield_check,
+                    c.palette[0],
+                    lists.values.count { it.enabled },
+                    stringResource(R.string.settings_sq_lists),
+                    Modifier.weight(1f),
+                )
+            }
+        }
+
+        // Blocklists have their own screen, from Home's tools.
+
+        Section(stringResource(R.string.protection_title), note = stringResource(R.string.protection_note)) {
+            LockdownRow() // Your VPN has its own screen, from Home's tools
+        }
+
+        Section(stringResource(R.string.dns_title), note = stringResource(R.string.dns_note)) {
+            DnsSettings()
+        }
+
+        Section(stringResource(R.string.settings_appearance)) {
+            SegmentedControl(
+                ThemeMode.entries.map {
+                    stringResource(
+                        when (it) {
+                            ThemeMode.System -> R.string.settings_theme_system
+                            ThemeMode.Light -> R.string.settings_theme_light
+                            ThemeMode.Dark -> R.string.settings_theme_dark
+                        },
+                    )
+                },
+                themeMode.ordinal,
+                { onThemeMode(ThemeMode.entries[it]) },
+            )
+        }
+
+        Section(stringResource(R.string.settings_general)) {
+            AddTileRow()
+            HorizontalDivider(color = c.outline)
+            UpdateRow()
+            HorizontalDivider(color = c.outline)
+            LinkRow(DesignR.drawable.ph_device_mobile_light, stringResource(R.string.settings_replay_intro), onReplayIntro)
+            HorizontalDivider(color = c.outline)
+            ClearHistoryRow()
+            CrashReportRow()
+        }
+
+        Section(stringResource(R.string.settings_about)) {
+            Text(stringResource(R.string.settings_promise), style = Warden.type.body)
+            HorizontalDivider(color = c.outline)
+            val context = LocalContext.current
+            LinkRow(DesignR.drawable.ph_eye_slash_light, stringResource(R.string.settings_privacy)) { openPage(context, PRIVACY_URL) }
+            HorizontalDivider(color = c.outline)
+            LinkRow(DesignR.drawable.ph_shield_check_light, stringResource(R.string.settings_terms)) { openPage(context, TERMS_URL) }
+            HorizontalDivider(color = c.outline)
+            Credits()
+            Text(stringResource(R.string.settings_version, version).uppercase(), style = Warden.type.caption, color = c.muted)
+        }
+        BarSpacer()
+    }
+}
+
+@Composable
+private fun Section(title: String, note: String? = null, content: @Composable ColumnScope.() -> Unit) {
+    SectionLabel(title, Modifier.padding(top = Spacing.l))
+    // One short line of context sits outside the card, so the card holds only controls.
+    if (note != null) Text(note, style = Warden.type.label, color = Warden.colors.muted)
+    Tile(Modifier.fillMaxWidth(), content = content)
+}
+
+@Composable
+internal fun LinkRow(icon: Int, label: String, onClick: () -> Unit) {
+    val c = Warden.colors
+    Row(
+        Modifier.fillMaxWidth().heightIn(min = 52.dp).clickable(onClick = onClick),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(Spacing.m),
+    ) {
+        IconBadge(icon, c.palette[3])
+        Text(label, Modifier.weight(1f), style = Warden.type.body)
+        Icon(painterResource(DesignR.drawable.ph_caret_right), null, Modifier.size(18.dp), tint = c.muted)
+    }
+}
+
+/** Open-source credits, folded away until asked for. */
+@Composable
+private fun Credits() {
+    val c = Warden.colors
+    var open by rememberSaveable { mutableStateOf(false) }
+    val turn by animateFloatAsState(if (open) 90f else 0f, Motion.emphasized(Motion.MEDIUM), label = "credits")
+    Column(Modifier.fillMaxWidth().animateContentSize(Motion.emphasized(Motion.LONG))) {
+        Row(
+            Modifier.fillMaxWidth().heightIn(min = 48.dp).clickable { open = !open },
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(stringResource(R.string.settings_credits_title), Modifier.weight(1f), style = Warden.type.body)
+            Icon(
+                painterResource(DesignR.drawable.ph_caret_right),
+                null,
+                Modifier.size(16.dp).graphicsLayer { rotationZ = turn },
+                tint = c.muted,
+            )
+        }
+        if (open) Text(stringResource(R.string.settings_credits), style = Warden.type.label, color = c.muted)
+    }
+}
+
+/** One list: name, what state it's in, and its switch. The status line retries or refreshes on tap. */
+@Composable
+internal fun BlocklistRow(source: BlocklistSource, state: BlocklistState) {
+    val c = Warden.colors
+    Row(Modifier.fillMaxWidth().heightIn(min = 64.dp), verticalAlignment = Alignment.CenterVertically) {
+        Column(Modifier.weight(1f)) {
+            Text(source.name, style = Warden.type.body)
+            val status = when {
+                state.busy -> stringResource(R.string.settings_bl_downloading)
+                state.failed -> stringResource(R.string.settings_bl_failed)
+                state.enabled && state.entries > 0 -> stringResource(
+                    R.string.settings_bl_entries,
+                    NumberFormat.getIntegerInstance().format(state.entries),
+                    DateUtils.getRelativeTimeSpanString(
+                        state.updatedAt,
+                        System.currentTimeMillis(),
+                        DateUtils.MINUTE_IN_MILLIS,
+                        DateUtils.FORMAT_ABBREV_RELATIVE,
+                    ).toString(),
+                )
+                else -> stringResource(R.string.settings_bl_license, source.license)
+            }
+            Text(status, style = Warden.type.label, color = if (state.failed) c.blocked else c.muted)
+        }
+        if (state.enabled || state.failed) RefreshButton(source.name, state.busy) { Blocklists.refresh(source.id) }
+        WardenSwitch(state.enabled, { Blocklists.setEnabled(source.id, it) }, contentDescription = source.name)
+        if (source.custom) ItemMenu(source.name, onRename = null, onDelete = { Blocklists.removeCustom(source.id) })
+    }
+}
+
+/** Add a list by URL: a hosts file or one domain per line, fetched over https like the built-in ones. */
+@Composable
+internal fun AddListButton() {
+    val context = LocalContext.current
+    val c = Warden.colors
+    var open by rememberSaveable { mutableStateOf(false) }
+    WardenButton(stringResource(R.string.settings_bl_add), { open = true }, Modifier.fillMaxWidth(), kind = ButtonKind.Tonal)
+    if (!open) return
+    var name by rememberSaveable { mutableStateOf("") }
+    var url by rememberSaveable { mutableStateOf("https://") }
+    var error by rememberSaveable { mutableStateOf<String?>(null) }
+    AlertDialog(
+        onDismissRequest = { open = false },
+        title = { Text(stringResource(R.string.settings_bl_add_title), style = Warden.type.title) },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(Spacing.m)) {
+                Field(R.string.settings_bl_url, url, { url = it }, R.string.settings_bl_url_hint)
+                Field(R.string.wg_f_name, name, { name = it }, R.string.wg_f_optional)
+                error?.let { Text(it, style = Warden.type.label, color = c.blocked) }
+            }
+        },
+        confirmButton = {
+            WardenButton(stringResource(R.string.wg_manual_save), {
+                error = runCatching { Blocklists.addCustom(name, url) }.exceptionOrNull()
+                    ?.let { problemText(context, it, context.getString(R.string.err_not_https)) }
+                if (error == null) open = false
+            })
+        },
+        dismissButton = { WardenButton(stringResource(R.string.settings_cancel), { open = false }, kind = ButtonKind.Text) },
+        containerColor = c.surface,
+    )
+}
+
+/** Update one list now. Spins while that list downloads. */
+@Composable
+private fun RefreshButton(listName: String, busy: Boolean, onClick: () -> Unit) {
+    val c = Warden.colors
+    val spin = if (busy && !Warden.reduceMotion) {
+        rememberInfiniteTransition("refresh").animateFloat(0f, 360f, infiniteRepeatable(tween(900, easing = LinearEasing)), "spin")
+    } else {
+        null
+    }
+    Box(
+        Modifier.size(48.dp).clip(CircleShape).clickable(enabled = !busy, role = Role.Button, onClick = onClick),
+        contentAlignment = Alignment.Center,
+    ) {
+        Icon(
+            painterResource(DesignR.drawable.ph_arrows_clockwise),
+            stringResource(R.string.settings_bl_refresh, listName),
+            Modifier.size(20.dp).graphicsLayer { rotationZ = spin?.value ?: 0f },
+            tint = if (busy) c.accentInk else c.muted,
+        )
+    }
+}
+
+/** Deletes all saved connections after a confirmation. Rules and blocklists are kept. */
+@Composable
+private fun ClearHistoryRow() {
+    val c = Warden.colors
+    var confirm by rememberSaveable { mutableStateOf(false) }
+    Row(
+        Modifier.fillMaxWidth().heightIn(min = 52.dp).clickable { confirm = true },
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(Spacing.m),
+    ) {
+        IconBadge(DesignR.drawable.ph_prohibit, c.blocked)
+        Text(stringResource(R.string.settings_clear), Modifier.weight(1f), style = Warden.type.body, color = c.blocked)
+    }
+    if (confirm) {
+        AlertDialog(
+            onDismissRequest = { confirm = false },
+            title = { Text(stringResource(R.string.settings_clear_title), style = Warden.type.title) },
+            text = { Text(stringResource(R.string.settings_clear_body), style = Warden.type.body) },
+            confirmButton = {
+                WardenButton(stringResource(R.string.settings_clear_confirm), {
+                    History.clear()
+                    confirm = false
+                }, kind = ButtonKind.Destructive)
+            },
+            dismissButton = { WardenButton(stringResource(R.string.settings_cancel), { confirm = false }, kind = ButtonKind.Text) },
+            containerColor = c.surface,
+        )
+    }
+}
+
+/** Opens a page in the browser; does nothing if the phone has none. */
+private fun openPage(context: Context, url: String) {
+    runCatching { context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) }
+}
+
+private const val PRIVACY_URL = "https://github.com/sammyZi/warden/blob/main/PRIVACY.md"
+private const val TERMS_URL = "https://github.com/sammyZi/warden/blob/main/TERMS.md"

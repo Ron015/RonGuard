@@ -1,0 +1,33 @@
+<resources>
+    <string name="log_title">Live log</string>
+    <string name="log_live">Live · %1$d events · %2$d blocked</string>
+    <string name="log_paused">Paused · %1$d events · %2$d blocked</string>
+    <string name="log_filter_all">All</string>
+    <string name="log_filter_blocked">Blocked</string>
+    <string name="log_filter_dns">DNS</string>
+    <string name="log_filter_connections">Connections</string>
+    <string name="log_blocked">Blocked</string>
+    <string name="log_empty_title">Quiet for now</string>
+    <string name="log_empty_body">Turn RonGuard on and every connection shows up here as it happens.</string>
+    <string name="log_filtered_title">Nothing here yet</string>
+    <string name="log_filtered_body">No recent events match this filter.</string>
+    <string name="rule_default">Default</string>
+    <string name="rule_allow_here">Allow for this app</string>
+    <string name="rule_block_here">Block for this app</string>
+    <string name="rule_allow_everywhere">Allow everywhere</string>
+    <string name="rule_block_everywhere">Block everywhere</string>
+    <string name="log_export">Export history as CSV</string>
+    <string name="log_export_share">Share a copy</string>
+    <string name="log_export_save">Save to device</string>
+    <string name="log_export_busy">Preparing the file</string>
+    <string name="log_export_failed">Couldn\'t save the file</string>
+    <plurals name="log_exported">
+        <item quantity="one">Saved %1$d row</item>
+        <item quantity="other">Saved %1$d rows</item>
+    </plurals>
+    <string name="log_search_hint">Search domain, app or kind…</string>
+    <string name="log_clear_all">Clear all</string>
+    <string name="log_clear_search">Clear search</string>
+    <string name="log_deleted">Log entry deleted</string>
+    <string name="log_delete_hint">Long-press to delete</string>
+</resources>
