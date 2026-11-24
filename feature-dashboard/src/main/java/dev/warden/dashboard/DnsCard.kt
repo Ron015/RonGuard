@@ -157,10 +157,12 @@ private fun Option(option: Upstream, selected: Boolean, onClick: () -> Unit) {
 private fun ProviderBadge(u: Upstream, hue: Color, size: Dp) {
     // Cloudflare and Quad9 show their own logo in their brand colour (Simple Icons, CC0); the rest use our icons.
     val (icon, tint) = when (u) {
-        Upstream.Cloudflare -> DesignR.drawable.logo_cloudflare to CLOUDFLARE_ORANGE
+        Upstream.Cloudflare, Upstream.CloudflareFamily ->
+            DesignR.drawable.logo_cloudflare to CLOUDFLARE_ORANGE
         Upstream.Quad9 -> DesignR.drawable.logo_quad9 to QUAD9_PINK
         Upstream.Phone -> DesignR.drawable.ph_wifi_high to hue
         Upstream.Custom -> DesignR.drawable.ph_gear_six to hue
+        else -> DesignR.drawable.ph_globe_hemisphere_west to hue
     }
     Box(Modifier.size(size).background(tint.copy(alpha = 0.16f), CircleShape), contentAlignment = Alignment.Center) {
         Icon(painterResource(icon), null, Modifier.size(size * 0.55f), tint = tint)
@@ -187,7 +189,19 @@ private fun Tag(text: String, hue: Color) {
 private fun optionTitle(u: Upstream) = when (u) {
     Upstream.Phone -> R.string.dns_title_phone
     Upstream.Cloudflare -> R.string.dns_name_cloudflare
+    Upstream.CloudflareFamily -> R.string.dns_name_cloudflare_family
     Upstream.Quad9 -> R.string.dns_name_quad9
+    Upstream.AdGuard -> R.string.dns_name_adguard
+    Upstream.AdGuardFamily -> R.string.dns_name_adguard_family
+    Upstream.AdGuardUnfiltered -> R.string.dns_name_adguard_unfiltered
+    Upstream.NextDNS -> R.string.dns_name_nextdns
+    Upstream.Mullvad -> R.string.dns_name_mullvad
+    Upstream.MullvadAdblock -> R.string.dns_name_mullvad_adblock
+    Upstream.CleanBrowsingFamily -> R.string.dns_name_cleanbrowsing_family
+    Upstream.CleanBrowsingAdult -> R.string.dns_name_cleanbrowsing_adult
+    Upstream.OpenDNSFamily -> R.string.dns_name_opendns_family
+    Upstream.Google -> R.string.dns_name_google
+    Upstream.ControlD -> R.string.dns_name_controld
     Upstream.Custom -> R.string.dns_title_custom
 }
 
@@ -198,8 +212,14 @@ private fun optionTags(u: Upstream): List<Pair<Int, Color>> {
     return when (u) {
         Upstream.Phone -> listOf(R.string.dns_tag_plain to c.warning)
         Upstream.Cloudflare -> listOf(R.string.dns_tag_encrypted to hue, R.string.dns_tag_fast to c.muted)
+        Upstream.CloudflareFamily, Upstream.AdGuardFamily, Upstream.CleanBrowsingFamily,
+        Upstream.CleanBrowsingAdult, Upstream.OpenDNSFamily ->
+            listOf(R.string.dns_tag_encrypted to hue, R.string.dns_tag_family to c.muted)
         Upstream.Quad9 -> listOf(R.string.dns_tag_encrypted to hue, R.string.dns_tag_malware to c.muted)
+        Upstream.AdGuard, Upstream.MullvadAdblock, Upstream.AdGuardUnfiltered ->
+            listOf(R.string.dns_tag_encrypted to hue, R.string.dns_tag_adblock to c.muted)
         Upstream.Custom -> listOf(R.string.dns_tag_encrypted to hue, R.string.dns_tag_yours to c.muted)
+        else -> listOf(R.string.dns_tag_encrypted to hue)
     }
 }
 
@@ -208,7 +228,19 @@ private fun upstreamName(u: Upstream) = stringResource(
     when (u) {
         Upstream.Phone -> R.string.dns_name_phone
         Upstream.Cloudflare -> R.string.dns_name_cloudflare
+        Upstream.CloudflareFamily -> R.string.dns_name_cloudflare_family
         Upstream.Quad9 -> R.string.dns_name_quad9
+        Upstream.AdGuard -> R.string.dns_name_adguard
+        Upstream.AdGuardFamily -> R.string.dns_name_adguard_family
+        Upstream.AdGuardUnfiltered -> R.string.dns_name_adguard_unfiltered
+        Upstream.NextDNS -> R.string.dns_name_nextdns
+        Upstream.Mullvad -> R.string.dns_name_mullvad
+        Upstream.MullvadAdblock -> R.string.dns_name_mullvad_adblock
+        Upstream.CleanBrowsingFamily -> R.string.dns_name_cleanbrowsing_family
+        Upstream.CleanBrowsingAdult -> R.string.dns_name_cleanbrowsing_adult
+        Upstream.OpenDNSFamily -> R.string.dns_name_opendns_family
+        Upstream.Google -> R.string.dns_name_google
+        Upstream.ControlD -> R.string.dns_name_controld
         Upstream.Custom -> R.string.dns_name_custom
     },
 )
@@ -219,8 +251,9 @@ private fun upstreamHue(u: Upstream, encrypted: Boolean): Color {
     val c = Warden.colors
     if (!encrypted) return c.warning
     return when (u) {
-        Upstream.Cloudflare -> c.palette[2]
+        Upstream.Cloudflare, Upstream.CloudflareFamily -> c.palette[2]
         Upstream.Quad9 -> c.palette[3]
+        Upstream.AdGuard, Upstream.AdGuardFamily, Upstream.AdGuardUnfiltered -> c.palette.getOrElse(5) { c.palette[4] }
         else -> c.palette[4]
     }
 }

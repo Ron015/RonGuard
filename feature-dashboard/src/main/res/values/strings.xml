@@ -94,7 +94,19 @@
     <string name="dns_sheet_title">Where lookups go</string>
     <string name="dns_name_phone">Your network</string>
     <string name="dns_name_cloudflare">Cloudflare</string>
+    <string name="dns_name_cloudflare_family">Cloudflare Family</string>
     <string name="dns_name_quad9">Quad9</string>
+    <string name="dns_name_adguard">AdGuard DNS</string>
+    <string name="dns_name_adguard_family">AdGuard Family</string>
+    <string name="dns_name_adguard_unfiltered">AdGuard Unfiltered</string>
+    <string name="dns_name_nextdns">NextDNS</string>
+    <string name="dns_name_mullvad">Mullvad DNS</string>
+    <string name="dns_name_mullvad_adblock">Mullvad Adblock</string>
+    <string name="dns_name_cleanbrowsing_family">CleanBrowsing Family</string>
+    <string name="dns_name_cleanbrowsing_adult">CleanBrowsing Adult</string>
+    <string name="dns_name_opendns_family">OpenDNS FamilyShield</string>
+    <string name="dns_name_google">Google DNS</string>
+    <string name="dns_name_controld">Control D</string>
     <string name="dns_name_custom">Custom</string>
     <string name="dns_title_phone">Your network\'s DNS</string>
     <string name="dns_title_custom">Custom server</string>
@@ -105,4 +117,6 @@
     <string name="dns_tag_fast">Fast</string>
     <string name="dns_tag_malware">Blocks malware</string>
     <string name="dns_tag_yours">Your server</string>
+    <string name="dns_tag_family">Family filter</string>
+    <string name="dns_tag_adblock">Blocks ads</string>
 </resources>
