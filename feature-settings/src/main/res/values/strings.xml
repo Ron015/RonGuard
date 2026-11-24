@@ -27,6 +27,11 @@
     <string name="settings_blocklists">Blocklists</string>
     <string name="settings_blocklists_note">Refreshed weekly on Wi-Fi.</string>
     <string name="bl_profiles_title">Quick profiles</string>
+    <string name="bl_custom_title">Custom domains</string>
+    <string name="bl_custom_note">Block a domain or subdomain for every app. Subdomains are included automatically.</string>
+    <string name="bl_custom_hint">example.com or ads.example.com</string>
+    <string name="bl_custom_add">Block</string>
+    <string name="bl_custom_remove">Remove</string>
     <string name="settings_bl_add">Add list</string>
     <string name="settings_bl_add_title">Add a blocklist</string>
     <string name="settings_bl_url">List address</string>

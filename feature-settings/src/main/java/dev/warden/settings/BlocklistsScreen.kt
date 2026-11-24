@@ -36,6 +36,9 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -45,8 +48,11 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import dev.warden.design.BarSpacer
 import dev.warden.design.FilterChip
@@ -100,9 +106,110 @@ fun BlocklistsScreen(backLabel: String, onBack: () -> Unit) {
             }
             AddListButton()
         }
+        CustomDomainBlock()
         BlockedDomains()
         BarSpacer()
     }
+}
+
+/** Type a domain or subdomain to always block (matches that host and its subdomains). */
+@Composable
+private fun CustomDomainBlock() {
+    val c = Warden.colors
+    val rules by Rules.domains.collectAsState()
+    val blocked = remember(rules) {
+        rules.filter { (k, v) -> k.startsWith("*:") && v == Verdict.Block }
+            .map { it.key.removePrefix("*:") }
+            .sorted()
+    }
+    var input by rememberSaveable { mutableStateOf("") }
+    val normalized = remember(input) { normalizeDomain(input) }
+    val canAdd = normalized != null && normalized !in blocked
+
+    SectionLabel(stringResource(R.string.bl_custom_title), Modifier.padding(top = Spacing.l))
+    Text(stringResource(R.string.bl_custom_note), style = Warden.type.label, color = c.muted)
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .padding(top = Spacing.s)
+            .clip(RoundedCornerShape(Radii.small))
+            .background(c.surfaceVariant)
+            .padding(horizontal = Spacing.m, vertical = Spacing.s),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(Spacing.s),
+    ) {
+        BasicTextField(
+            value = input,
+            onValueChange = { input = it },
+            modifier = Modifier.weight(1f),
+            singleLine = true,
+            textStyle = Warden.type.body.copy(color = c.text),
+            cursorBrush = SolidColor(c.accentInk),
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri, imeAction = ImeAction.Done),
+            keyboardActions = KeyboardActions(
+                onDone = {
+                    if (canAdd) {
+                        Rules.setEverywhere(normalized!!, Verdict.Block)
+                        input = ""
+                    }
+                },
+            ),
+            decorationBox = { field ->
+                Box {
+                    if (input.isEmpty()) {
+                        Text(stringResource(R.string.bl_custom_hint), style = Warden.type.body, color = c.muted)
+                    }
+                    field()
+                }
+            },
+        )
+        Text(
+            stringResource(R.string.bl_custom_add),
+            style = Warden.type.label,
+            color = if (canAdd) c.accentInk else c.muted,
+            modifier = Modifier
+                .clickable(enabled = canAdd) {
+                    Rules.setEverywhere(normalized!!, Verdict.Block)
+                    input = ""
+                }
+                .padding(Spacing.s),
+        )
+    }
+    if (blocked.isNotEmpty()) {
+        Tile(Modifier.fillMaxWidth().padding(top = Spacing.s)) {
+            blocked.forEachIndexed { i, domain ->
+                if (i > 0) HorizontalDivider(color = c.outline)
+                Row(
+                    Modifier
+                        .fillMaxWidth()
+                        .heightIn(min = 48.dp)
+                        .padding(horizontal = Spacing.s),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(domain, Modifier.weight(1f), style = Warden.type.body, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    Text(
+                        stringResource(R.string.bl_custom_remove),
+                        style = Warden.type.label,
+                        color = c.blocked,
+                        modifier = Modifier
+                            .clickable { Rules.setEverywhere(domain, null) }
+                            .padding(Spacing.s),
+                    )
+                }
+            }
+        }
+    }
+}
+
+/** Lowercase host only; strips scheme/path/trailing dots. Null if not a plausible domain. */
+private fun normalizeDomain(raw: String): String? {
+    var s = raw.trim().lowercase()
+    if (s.isEmpty()) return null
+    s = s.removePrefix("https://").removePrefix("http://").removePrefix("www.")
+    s = s.substringBefore('/').substringBefore('?').substringBefore('#').trimEnd('.')
+    if (s.isEmpty() || '.' !in s || ' ' in s) return null
+    if (!s.all { it.isLetterOrDigit() || it == '.' || it == '-' }) return null
+    return s
 }
 
 /**

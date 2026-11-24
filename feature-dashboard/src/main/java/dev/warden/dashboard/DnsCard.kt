@@ -12,8 +12,10 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ModalBottomSheet
@@ -108,9 +110,14 @@ internal fun DnsCard(active: Boolean, onOpenSettings: () -> Unit, modifier: Modi
 private fun DnsSheet(current: Upstream, onDismiss: () -> Unit, onPick: (Upstream) -> Unit) {
     val c = Warden.colors
     val sheet = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    val scroll = rememberScrollState()
     ModalBottomSheet(onDismissRequest = onDismiss, sheetState = sheet, containerColor = c.background) {
         Column(
-            Modifier.padding(horizontal = Spacing.xl).padding(bottom = Spacing.xl),
+            Modifier
+                .fillMaxWidth()
+                .verticalScroll(scroll)
+                .padding(horizontal = Spacing.xl)
+                .padding(bottom = Spacing.xl),
             verticalArrangement = Arrangement.spacedBy(Spacing.s),
         ) {
             Text(stringResource(R.string.dns_sheet_title), Modifier.padding(bottom = Spacing.s), style = Warden.type.headline)

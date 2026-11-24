@@ -3,6 +3,9 @@ package dev.warden.apps
 import dev.warden.design.WardenButton
 import dev.warden.design.ButtonKind
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
@@ -18,6 +21,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import dev.warden.design.FilterChip
 import dev.warden.design.SegmentedControl
 import dev.warden.design.Spacing
 import dev.warden.design.Warden
@@ -121,22 +125,22 @@ private fun Note(text: String, warn: Boolean) {
 }
 
 /** Per-app DNS override. Default = global setting from Settings. */
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 internal fun AppDnsRow(uid: Int) {
     val c = Warden.colors
     val overrides by Dns.appUpstream.collectAsState()
     val current = overrides[uid]
-    val options = listOf(null to stringResource(R.string.app_dns_global)) +
-        listOf(
-            Upstream.Cloudflare to "Cloudflare",
-            Upstream.AdGuard to "AdGuard",
-            Upstream.AdGuardFamily to "AdGuard Family",
-            Upstream.Quad9 to "Quad9",
-            Upstream.MullvadAdblock to "Mullvad Adblock",
-            Upstream.CleanBrowsingFamily to "CleanBrowsing Family",
-            Upstream.Google to "Google",
-        )
-    val selectedIdx = options.indexOfFirst { it.first == current }.coerceAtLeast(0)
+    val options = listOf(
+        null to stringResource(R.string.app_dns_global),
+        Upstream.Cloudflare to "Cloudflare",
+        Upstream.AdGuard to "AdGuard",
+        Upstream.AdGuardFamily to "AdGuard Family",
+        Upstream.Quad9 to "Quad9",
+        Upstream.MullvadAdblock to "Mullvad Adblock",
+        Upstream.CleanBrowsingFamily to "CleanBrowsing Family",
+        Upstream.Google to "Google",
+    )
 
     Row(Modifier.fillMaxWidth().heightIn(min = 48.dp), verticalAlignment = Alignment.CenterVertically) {
         Icon(
@@ -147,9 +151,18 @@ internal fun AppDnsRow(uid: Int) {
         )
         Text(stringResource(R.string.app_dns_title), Modifier.weight(1f).padding(start = Spacing.m), style = Warden.type.body)
     }
-    SegmentedControl(
-        options.map { it.second },
-        selectedIdx.coerceIn(0, options.lastIndex),
-        { i -> Dns.setAppUpstream(uid, options[i].first) },
-    )
+    // Chips wrap so labels stay readable; SegmentedControl was too tight with many options.
+    FlowRow(
+        Modifier.fillMaxWidth().padding(top = Spacing.xs),
+        horizontalArrangement = Arrangement.spacedBy(Spacing.s),
+        verticalArrangement = Arrangement.spacedBy(Spacing.s),
+    ) {
+        options.forEach { (upstream, label) ->
+            FilterChip(
+                label,
+                selected = current == upstream,
+                onClick = { Dns.setAppUpstream(uid, upstream) },
+            )
+        }
+    }
 }
