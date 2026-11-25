@@ -16,6 +16,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.conflate
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
@@ -46,11 +48,17 @@ object History {
         if (!started.compareAndSet(false, true)) return
         val app = context.applicationContext
         DeviceMem.init(app)
-        dao = Room.databaseBuilder(app, RonGuardDb::class.java, "ronguard.db").fallbackToDestructiveMigration(true).build().connections()
+        dao = Room.databaseBuilder(app, RonGuardDb::class.java, "ronguard.db")
+            .fallbackToDestructiveMigration(true)
+            // Dedicated threads so Room invalidations don't steal main-thread frames.
+            .setQueryExecutor(java.util.concurrent.Executors.newSingleThreadExecutor())
+            .setTransactionExecutor(java.util.concurrent.Executors.newSingleThreadExecutor())
+            .build()
+            .connections()
         val power = app.getSystemService(PowerManager::class.java)
-        // On low-RAM devices prune sooner so the DB does not grow into a multi‑MB file.
-        val pruneEvery = if (DeviceMem.lowRam) 15 * 60_000L else PRUNE_EVERY_MS
-        val flushMs = if (DeviceMem.lowRam) 1_000L else FLUSH_MS
+        // Flush less often on low-RAM: fewer DB writes → fewer list recompositions.
+        val pruneEvery = if (DeviceMem.lowRam) 20 * 60_000L else PRUNE_EVERY_MS
+        val flushMs = if (DeviceMem.lowRam) 3_000L else 2_000L
         scope.launch {
             var sincePrune = Long.MAX_VALUE / 2
             while (true) {
@@ -101,7 +109,13 @@ object History {
 
     /** Most recent events, newest first: what the live screens (apps, map, log) show. */
     fun recent(limit: Int = DeviceMem.recentRows): Flow<List<NetEvent>> =
-        dao.recent(limit).whileVisible().map { rows -> rows.map { it.toEvent() } }
+        dao.recent(limit)
+            .whileVisible()
+            .map { rows -> rows.map { it.toEvent() } }
+            // Room re-emits on every flush; skip identical lists and drop intermediate emissions
+            // so Compose is not forced to recompose the full list every ~1s.
+            .distinctUntilChanged()
+            .conflate()
 
     /** When this process started: the "this session" range. */
     val sessionStart = System.currentTimeMillis()

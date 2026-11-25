@@ -104,6 +104,7 @@ fun EmptyState(@DrawableRes illustration: Int, title: String, body: String, modi
  */
 @Composable
 fun Modifier.staggerIn(index: Int, enabled: Boolean): Modifier {
+    // Skip entirely when the system asks for reduced motion — saves LaunchedEffect + layer work.
     if (!enabled || index >= Motion.STAGGER_ITEMS || Warden.reduceMotion) return this
     val progress = remember { Animatable(0f) }
     LaunchedEffect(Unit) {

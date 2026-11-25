@@ -37,6 +37,7 @@ import dev.ronguard.design.Motion
 import dev.ronguard.design.Spacing
 import dev.ronguard.design.Warden
 import dev.ronguard.design.tabular
+import dev.ronguard.engine.DeviceMem
 import dev.ronguard.engine.NetEvent
 import kotlinx.coroutines.delay
 import dev.ronguard.design.R as DesignR
@@ -60,12 +61,14 @@ fun AppsScreen(
     // Owned here, not by the list, so opening an app and coming back keeps the scroll position
     // and doesn't replay the entrance stagger.
     val listState = rememberLazyListState()
-    var firstAppearance by remember { mutableStateOf(true) }
+    var firstAppearance by remember { mutableStateOf(!DeviceMem.lowRam) }
     LaunchedEffect(Unit) {
-        delay(FIRST_APPEARANCE_MS)
-        firstAppearance = false
+        if (firstAppearance) {
+            delay(FIRST_APPEARANCE_MS)
+            firstAppearance = false
+        }
     }
-    val reduceMotion = Warden.reduceMotion
+    val reduceMotion = Warden.reduceMotion || DeviceMem.lowRam
     SharedTransitionLayout(modifier.fillMaxSize()) {
         AnimatedContent(
             openUid,

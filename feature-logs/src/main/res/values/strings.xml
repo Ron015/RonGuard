@@ -42,4 +42,5 @@
     <string name="log_detail_latency">Latency</string>
     <string name="log_detail_bytes">Data</string>
     <string name="log_detail_rules">Rules for this domain</string>
+    <string name="log_showing">Showing %1$d of %2$d · scroll for more</string>
 </resources>

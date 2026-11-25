@@ -47,7 +47,9 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -60,11 +62,15 @@ import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -75,6 +81,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import dev.ronguard.data.History
 import dev.ronguard.design.EmptyState
 import dev.ronguard.design.FilterChip
 import dev.ronguard.design.IconBadge
@@ -83,14 +90,12 @@ import dev.ronguard.design.Spacing
 import dev.ronguard.design.Radii
 import dev.ronguard.design.Warden
 import dev.ronguard.design.formatBytes
-import dev.ronguard.design.staggerIn
 import dev.ronguard.design.tabular
+import dev.ronguard.engine.DeviceMem
 import dev.ronguard.engine.NetEvent
-import androidx.compose.runtime.collectAsState
 import dev.ronguard.design.ChoiceChips
 import dev.ronguard.rules.DomainChoice
 import dev.ronguard.rules.Rules
-import kotlinx.coroutines.delay
 import java.text.DateFormat
 import java.util.Date
 import dev.ronguard.design.R as DesignR
@@ -106,7 +111,6 @@ private enum class Filter(val label: Int, val keep: (NetEvent) -> Boolean) {
 /** Live stream of DNS answers and connections. Long-press selects; tap opens full details. */
 @Composable
 fun LogScreen(
-    events: List<NetEvent>,
     running: Boolean,
     appLabel: (Int) -> String,
     appIcon: (Int) -> ImageBitmap?,
@@ -117,28 +121,48 @@ fun LogScreen(
     var searchQuery by rememberSaveable { mutableStateOf("") }
     var selectedIds by remember { mutableStateOf(setOf<String>()) }
     var detailEvent by remember { mutableStateOf<NetEvent?>(null) }
+    // Lazy window: start small, grow as the user scrolls (avoids composing hundreds of rows at once).
+    var visibleCount by remember { mutableIntStateOf(DeviceMem.logPageSize) }
+    val events by remember { History.recent(DeviceMem.recentRows) }.collectAsState(emptyList())
     val selecting = selectedIds.isNotEmpty()
     val shown = remember(events, filter, searchQuery) {
-        events.filter(filter.keep).filter { e ->
-            if (searchQuery.isBlank()) true
-            else {
-                val q = searchQuery.lowercase(Locale.getDefault())
-                (e.domain?.lowercase(Locale.getDefault())?.contains(q) == true) ||
-                    e.target.lowercase(Locale.getDefault()).contains(q) ||
-                    appLabel(e.uid).lowercase(Locale.getDefault()).contains(q) ||
-                    e.kind.lowercase(Locale.getDefault()).contains(q)
+        val q = searchQuery.trim().lowercase(Locale.getDefault())
+        events.asSequence()
+            .filter(filter.keep)
+            .filter { e ->
+                if (q.isEmpty()) true
+                else {
+                    (e.domain?.lowercase(Locale.getDefault())?.contains(q) == true) ||
+                        e.target.lowercase(Locale.getDefault()).contains(q) ||
+                        appLabel(e.uid).lowercase(Locale.getDefault()).contains(q) ||
+                        e.kind.lowercase(Locale.getDefault()).contains(q)
+                }
+            }
+            .toList()
+    }
+    // Cap what LazyColumn actually receives; scroll loads more.
+    val page = remember(shown, visibleCount) { shown.take(visibleCount) }
+    val blocked = remember(events) { events.count { it.blocked } }
+    val scope = rememberCoroutineScope()
+    val listState = rememberLazyListState()
+
+    // Reset page size when filter/search changes so we don't keep a huge window after narrowing.
+    LaunchedEffect(filter, searchQuery) {
+        visibleCount = DeviceMem.logPageSize
+    }
+    // When near the end of the visible page, reveal the next chunk.
+    LaunchedEffect(listState, page.size, shown.size) {
+        snapshotFlow {
+            val info = listState.layoutInfo
+            val last = info.visibleItemsInfo.lastOrNull()?.index ?: 0
+            last to info.totalItemsCount
+        }.collect { (last, total) ->
+            if (total > 0 && last >= total - 4 && visibleCount < shown.size) {
+                visibleCount = (visibleCount + DeviceMem.logPageSize).coerceAtMost(shown.size)
             }
         }
     }
-    val blocked = events.count { it.blocked }
-    val scope = rememberCoroutineScope()
 
-    // Stagger only on first appearance, never while scrolling or as new rows arrive.
-    var firstAppearance by remember { mutableStateOf(true) }
-    LaunchedEffect(Unit) {
-        delay(FIRST_APPEARANCE_MS)
-        firstAppearance = false
-    }
     val time = remember { DateFormat.getTimeInstance(DateFormat.MEDIUM) }
     val dateTime = remember { DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.MEDIUM) }
 
@@ -258,9 +282,10 @@ fun LogScreen(
         }
         HorizontalDivider(color = c.outline)
         LogList(
-            shown = shown,
+            page = page,
+            totalMatched = shown.size,
             noEvents = events.isEmpty(),
-            firstAppearance = firstAppearance,
+            listState = listState,
             time = time,
             appLabel = appLabel,
             appIcon = appIcon,
@@ -287,9 +312,10 @@ fun LogScreen(
 
 @Composable
 private fun ColumnScope.LogList(
-    shown: List<NetEvent>,
+    page: List<NetEvent>,
+    totalMatched: Int,
     noEvents: Boolean,
-    firstAppearance: Boolean,
+    listState: LazyListState,
     time: DateFormat,
     appLabel: (Int) -> String,
     appIcon: (Int) -> ImageBitmap?,
@@ -300,8 +326,8 @@ private fun ColumnScope.LogList(
     onOpenDetail: (NetEvent) -> Unit,
 ) {
     val c = Warden.colors
-    LazyColumn(Modifier.weight(1f).fillMaxWidth()) {
-        if (shown.isEmpty()) {
+    LazyColumn(Modifier.weight(1f).fillMaxWidth(), state = listState) {
+        if (page.isEmpty()) {
             item {
                 EmptyState(
                     DesignR.drawable.ph_pulse_light,
@@ -311,12 +337,11 @@ private fun ColumnScope.LogList(
                 )
             }
         }
-        itemsIndexed(shown, key = { _, e -> e.id }) { index, e ->
+        items(page, key = { it.id }) { e ->
             val selected = e.id in selectedIds
             @OptIn(ExperimentalFoundationApi::class)
             Row(
                 Modifier
-                    .staggerIn(index, firstAppearance)
                     .fillMaxWidth()
                     .background(if (selected) c.accentInk.copy(alpha = 0.12f) else Color.Transparent)
                     .combinedClickable(
@@ -380,6 +405,18 @@ private fun ColumnScope.LogList(
                 }
             }
             HorizontalDivider(Modifier.padding(start = Spacing.xl + 36.dp + Spacing.m), color = c.outline)
+        }
+        if (page.isNotEmpty() && page.size < totalMatched) {
+            item(key = "log-more") {
+                Text(
+                    stringResource(R.string.log_showing, page.size, totalMatched),
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = Spacing.m),
+                    style = Warden.type.caption,
+                    color = c.muted,
+                )
+            }
         }
         item { BarSpacer() }
     }
@@ -471,8 +508,6 @@ private fun LiveDot(running: Boolean) {
         Box(Modifier.size(7.dp).background(if (running) c.accentInk else c.muted, CircleShape))
     }
 }
-
-private const val FIRST_APPEARANCE_MS = 600L
 
 /** Block or allow this domain for this app, or everywhere. Takes effect for new connections. */
 @Composable

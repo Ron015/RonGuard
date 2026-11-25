@@ -93,10 +93,12 @@ import dev.ronguard.design.Warden
 import dev.ronguard.design.ThemeMode
 import dev.ronguard.design.glow
 import dev.ronguard.data.History
+import dev.ronguard.engine.DeviceMem
 import dev.ronguard.engine.Engine
 import dev.ronguard.rules.Blocklists
 import dev.ronguard.engine.RonGuardVpnService
 import dev.ronguard.logs.LogScreen
+import kotlinx.coroutines.flow.emptyFlow
 import dev.ronguard.map.MapScreen
 import dev.ronguard.settings.SettingsScreen
 import dev.ronguard.settings.VpnScreen
@@ -142,14 +144,18 @@ internal fun Shell(themeMode: ThemeMode, onThemeMode: (ThemeMode) -> Unit, onRep
     BackHandler(enabled = tab != Tab.Home) { tab = Tab.Home }
 
     val running by Engine.running.collectAsState()
-    // Saved history, so lists survive restarts; the engine feeds it in 1.5s batches.
-    val events by remember { History.recent() }.collectAsState(emptyList())
+    // Only the Apps tab needs a shared live window; Log/Map collect their own data.
+    // Keeping this Flow active on every tab forced Room + Compose work during freezes.
+    val events by remember(tab) {
+        if (tab == Tab.Apps) History.recent(DeviceMem.appsRows) else emptyFlow()
+    }.collectAsState(emptyList())
     val lists by Blocklists.states.collectAsState()
     val (power, onPower) = rememberPower(running)
     val apps = remember { AppInfo(context.packageManager, context) }
-    val reduceMotion = Warden.reduceMotion
+    val reduceMotion = Warden.reduceMotion || DeviceMem.lowRam
 
-    // Content fills the screen and scrolls under a floating liquid-glass tab bar.
+    // Liquid-glass blur is expensive on low-RAM GPUs — use a solid bar there instead.
+    val useHaze = !DeviceMem.lowRam
     val haze = rememberHazeState()
     val density = LocalDensity.current
     var barHeight by remember { mutableStateOf(0.dp) }
@@ -157,7 +163,10 @@ internal fun Shell(themeMode: ThemeMode, onThemeMode: (ThemeMode) -> Unit, onRep
         CompositionLocalProvider(LocalBarInset provides barHeight) {
             AnimatedContent(
                 tab,
-                Modifier.fillMaxSize().hazeSource(haze).statusBarsPadding(),
+                Modifier
+                    .fillMaxSize()
+                    .then(if (useHaze) Modifier.hazeSource(haze) else Modifier)
+                    .statusBarsPadding(),
                 transitionSpec = {
                     if (reduceMotion) {
                         ContentTransform(EnterTransition.None, ExitTransition.None)
@@ -215,7 +224,7 @@ internal fun Shell(themeMode: ThemeMode, onThemeMode: (ThemeMode) -> Unit, onRep
                             focusApp = mapFocus,
                             onFocusApplied = { mapFocus = null },
                         )
-                        Tab.Log -> LogScreen(events, running, apps::label, apps::icon)
+                        Tab.Log -> LogScreen(running, apps::label, apps::icon)
                         Tab.Settings -> SettingsScreen(
                             version = context.packageManager.getPackageInfo(context.packageName, 0).versionName.orEmpty(),
                             themeMode = themeMode,
@@ -242,21 +251,21 @@ internal fun Shell(themeMode: ThemeMode, onThemeMode: (ThemeMode) -> Unit, onRep
 }
 
 /**
- * Floating liquid-glass tab bar: content refracts and blurs through it (Haze glass, GPU RenderEffect,
- * Balanced performance mode; a plain translucent fallback where the platform can't). One lime pill
- * springs to the selected tab.
+ * Floating tab bar. On capable devices it uses liquid-glass blur; on low-RAM phones a solid
+ * surface (blur was a major source of random freezes on 2–3 GB devices).
  */
 @Composable
 private fun BottomBar(current: Tab, haze: HazeState, modifier: Modifier, onSelect: (Tab) -> Unit) {
     val c = Warden.colors
     val shape = RoundedCornerShape(Radii.large)
-    // Frosted, not clear glass: enough blur and tint that text scrolling behind never fights the labels.
+    val useHaze = !DeviceMem.lowRam
+    // Lighter blur than before: 48dp Balanced was too heavy while scrolling underneath.
     val style = remember(c) {
         HazeBlurStyle {
-            blurRadius(48.dp)
+            blurRadius(24.dp)
             backgroundColor(c.background)
-            colorEffects(listOf(HazeColorEffect.tint(c.background.copy(alpha = 0.5f))))
-            noiseFactor(0.04f)
+            colorEffects(listOf(HazeColorEffect.tint(c.background.copy(alpha = 0.55f))))
+            noiseFactor(0.02f)
         }
     }
     Box(modifier.navigationBarsPadding().padding(horizontal = Spacing.l, vertical = Spacing.s)) {
@@ -265,7 +274,13 @@ private fun BottomBar(current: Tab, haze: HazeState, modifier: Modifier, onSelec
                 .fillMaxWidth()
                 .height(68.dp)
                 .clip(shape)
-                .hazeBlur(HazeInput.Sources(haze), style, HazePerformanceMode.Balanced)
+                .then(
+                    if (useHaze) {
+                        Modifier.hazeBlur(HazeInput.Sources(haze), style, HazePerformanceMode.Performance)
+                    } else {
+                        Modifier.background(c.surface.copy(alpha = 0.96f))
+                    },
+                )
                 .border(1.dp, c.outline.copy(alpha = 0.6f), shape)
                 .padding(Spacing.s),
         ) {
@@ -372,6 +387,8 @@ internal class AppInfo(private val pm: PackageManager, context: Context) {
     private val iconPx = (40 * context.resources.displayMetrics.density).toInt()
     private val labels = java.util.concurrent.ConcurrentHashMap<Int, String>()
     private val icons = mutableStateMapOf<Int, ImageBitmap?>()
+    private val iconOrder = ArrayDeque<Int>() // LRU order for eviction on low-RAM
+    private val iconLimit = if (DeviceMem.lowRam) 48 else 120
     private val loading = HashSet<Int>() // main thread only
     private val scope = MainScope()
 
@@ -397,6 +414,13 @@ internal class AppInfo(private val pm: PackageManager, context: Context) {
             scope.launch {
                 val bitmap = withContext(Dispatchers.IO) { decode(uid) }
                 icons[uid] = bitmap
+                iconOrder.remove(uid)
+                iconOrder.addLast(uid)
+                while (iconOrder.size > iconLimit) {
+                    val old = iconOrder.removeFirst()
+                    icons.remove(old)
+                    loading.remove(old)
+                }
             }
         }
         return icons[uid]

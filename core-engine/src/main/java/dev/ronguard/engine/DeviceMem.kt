@@ -18,32 +18,42 @@ object DeviceMem {
 
     /** Max NetEvents held in the engine until History drains them. */
     @Volatile
-    var maxPending: Int = 20_000
+    var maxPending: Int = 12_000
         private set
 
-    /** Live log / apps list window (newest first). */
+    /** Max rows the log can page through (newest first). */
     @Volatile
-    var recentRows: Int = 1_000
+    var recentRows: Int = 800
+        private set
+
+    /** Shared live list for Apps tab (keep small — full list recomposes often). */
+    @Volatile
+    var appsRows: Int = 120
+        private set
+
+    /** How many log rows to show before the user scrolls for more. */
+    @Volatile
+    var logPageSize: Int = 50
         private set
 
     /** Map screen connection cap. */
     @Volatile
-    var mapRows: Int = 5_000
+    var mapRows: Int = 3_000
         private set
 
     /** Max rows kept in Room after prune. */
     @Volatile
-    var keepRows: Int = 200_000
+    var keepRows: Int = 100_000
         private set
 
     /** How many days of history to retain. */
     @Volatile
-    var keepDays: Long = 30L
+    var keepDays: Long = 21L
         private set
 
     /** Blocked-domains list on the blocklists screen. */
     @Volatile
-    var blockedRows: Int = 100
+    var blockedRows: Int = 80
         private set
 
     fun init(context: Context) {
@@ -55,19 +65,23 @@ object DeviceMem {
         lowRam = (am?.isLowRamDevice == true) || totalMb in 1..3072 || classMb <= 128
 
         if (lowRam) {
-            maxPending = 2_000
-            recentRows = 250
-            mapRows = 800
-            keepRows = 25_000
-            keepDays = 7L
-            blockedRows = 40
+            maxPending = 1_500
+            recentRows = 200
+            appsRows = 60
+            logPageSize = 30
+            mapRows = 400
+            keepRows = 15_000
+            keepDays = 5L
+            blockedRows = 30
         } else {
-            maxPending = 20_000
-            recentRows = 1_000
-            mapRows = 5_000
-            keepRows = 200_000
-            keepDays = 30L
-            blockedRows = 100
+            maxPending = 12_000
+            recentRows = 800
+            appsRows = 120
+            logPageSize = 50
+            mapRows = 3_000
+            keepRows = 100_000
+            keepDays = 21L
+            blockedRows = 80
         }
     }
 }
