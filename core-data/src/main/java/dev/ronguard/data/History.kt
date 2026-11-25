@@ -34,7 +34,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 enum class Range(val buckets: Int) { Today(24), Week(28), Month(30) }
 
 /**
- * Persistent history: drains the engine every [FLUSH_MS] into Room in one transaction (spec: batch
+ * Persistent history: drains the engine every few seconds into Room in one transaction (spec: batch
  * inserts every 1-2s), prunes by age and size, and serves aggregates to the UI. Started once per
  * process from the Application, so it also runs when only the VPN service is alive.
  */
@@ -248,7 +248,6 @@ object History {
         bytesUp = bytesUp, bytesDown = bytesDown, latencyMs = latencyMs, failed = failed,
     )
 
-    private const val FLUSH_MS = 1_500L
     private const val TICK_MS = 60_000L
     private const val FLUSH_SCREEN_OFF_MS = 30_000L
     private const val FLUSH_IDLE_MS = 10_000L
