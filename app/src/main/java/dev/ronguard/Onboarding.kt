@@ -178,7 +178,7 @@ internal fun Onboarding(onDone: () -> Unit) {
 }
 
 /**
- * Each step shows the real thing where it can (the live globe, actual log rows) and a lime-tinted
+ * Each step shows the real thing where it can (the live globe, actual log rows) and a purple-tinted
  * 3D object (3dicons, CC0) where an object says it better. Objects float gently unless motion is off.
  */
 @Composable
@@ -205,7 +205,7 @@ private fun FloatingObject(@DrawableRes art: Int) {
             .animateFloat(-6f, 6f, infiniteRepeatable(tween(2600, easing = Motion.Emphasized), RepeatMode.Reverse), "bob")
     }
     Box(contentAlignment = Alignment.Center) {
-        // Soft lime light behind the object.
+        // Soft purple light behind the object.
         Box(
             Modifier
                 .size(220.dp)

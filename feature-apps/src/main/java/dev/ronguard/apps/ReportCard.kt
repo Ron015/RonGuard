@@ -188,17 +188,17 @@ private fun Card(name: String, icon: ImageBitmap?, r: Report) {
             Text(r.companies.take(MAX_LISTED).joinToString("  ·  "), style = Warden.type.body, color = paper)
         }
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Spacing.s)) {
-            Icon(painterResource(DesignR.drawable.ph_shield_check), null, Modifier.size(16.dp), tint = Color(0xFFD8F23C))
+            Icon(painterResource(DesignR.drawable.ph_shield_check), null, Modifier.size(16.dp), tint = Color(0xFFA855F7))
             Text(stringResource(R.string.report_footer, g.score), style = Warden.type.caption, color = muted)
         }
     }
 }
 
-/** The letter in a filled circle: lime for A/B, amber for C, vermilion below. Same on any theme. */
+/** The letter in a filled circle: purple for A/B, amber for C, vermilion below. Same on any theme. */
 @Composable
 internal fun GradeBadge(letter: String, size: androidx.compose.ui.unit.Dp, modifier: Modifier = Modifier) {
     val fill = when (letter) {
-        "A", "B" -> Color(0xFFD8F23C)
+        "A", "B" -> Color(0xFFA855F7)
         "C" -> Color(0xFFF2BC45)
         NO_GRADE -> Color(0xFF8D9692)
         else -> Color(0xFFFF6B4A)

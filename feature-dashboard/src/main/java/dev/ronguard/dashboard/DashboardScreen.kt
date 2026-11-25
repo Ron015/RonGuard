@@ -288,7 +288,7 @@ private fun drillDown(forward: Boolean): ContentTransform {
         .togetherWith(slideOutHorizontally(Motion.emphasized(Motion.LONG)) { -dir * it / 4 } + fadeOut(Motion.emphasized(Motion.MEDIUM)))
 }
 
-/** The on/off control: a wide pill, lime when protecting. The power glyph keeps its three states. */
+/** The on/off control: a wide pill, purple when protecting. The power glyph keeps its three states. */
 @Composable
 private fun ProtectionPill(state: PowerState, onClick: () -> Unit) {
     val c = Warden.colors

@@ -22,10 +22,10 @@ data class WardenColors(
     val outline: Color,
     val text: Color,
     val muted: Color,
-    /** Lime: the one main colour. Fills only (buttons, pills, switch track, power button). */
+    /** Neon purple accent. Fills only (buttons, pills, switch track, power button). */
     val primary: Color,
     val onPrimary: Color,
-    /** The accent as text, strokes and icons on the background: olive on light (lime vanishes there), lime on dark. */
+    /** Accent as text, strokes and icons: deep violet on light, neon purple on dark. */
     val accentInk: Color,
     val blocked: Color,
     val onBlocked: Color,
@@ -39,40 +39,40 @@ data class WardenColors(
     val isDark: Boolean,
 )
 
-// Light muted/blocked/warning are darkened so they pass 4.5:1 as text on every surface; lime is
-// fill-only on light (1.1:1 against the background), so text-weight accents use accentInk.
+// Light muted/blocked/warning pass as text on surfaces; primary purple is for fills;
+// text-weight accents use accentInk.
 // ContrastTest guards this; docs/design-system.md has the table.
 val LightColors = WardenColors(
-    background = Color(0xFFF4F4EE),
+    background = Color(0xFFF0F0F8),
     surface = Color(0xFFFFFFFF),
-    surfaceVariant = Color(0xFFE9EAE2),
-    outline = Color(0xFFD7D8CE),
-    text = Color(0xFF121310),
-    muted = Color(0xFF5E605A),
-    primary = Color(0xFFD8F23C),
-    onPrimary = Color(0xFF121310),
-    accentInk = Color(0xFF4E6300),
-    blocked = Color(0xFFB9391F),
+    surfaceVariant = Color(0xFFE4E4F0),
+    outline = Color(0xFFC8C8DC),
+    text = Color(0xFF0E1020),
+    muted = Color(0xFF5A5C72),
+    primary = Color(0xFF7C3AED),
+    onPrimary = Color(0xFFFFFFFF),
+    accentInk = Color(0xFF5B21B6),
+    blocked = Color(0xFFDC2626),
     onBlocked = Color(0xFFFFFFFF),
-    warning = Color(0xFF876000),
-    palette = listOf(Color(0xFF2E6BD1), Color(0xFFC2408A), Color(0xFFA8651A), Color(0xFF6E4FD8), Color(0xFF0093AE)),
+    warning = Color(0xFFB45309),
+    palette = listOf(Color(0xFF2563EB), Color(0xFFC026D3), Color(0xFF7C3AED), Color(0xFF0891B2), Color(0xFF4F46E5)),
     isDark = false,
 )
 
 val DarkColors = WardenColors(
-    background = Color(0xFF0E0F0D),
-    surface = Color(0xFF18191A),
-    surfaceVariant = Color(0xFF232427),
-    outline = Color(0xFF2C2E30),
-    text = Color(0xFFF3F4EE),
-    muted = Color(0xFF9A9C97),
-    primary = Color(0xFFD8F23C),
-    onPrimary = Color(0xFF0E0F0D),
-    accentInk = Color(0xFFD8F23C),
-    blocked = Color(0xFFFF6B4A),
-    onBlocked = Color(0xFF0E0F0D),
-    warning = Color(0xFFF2BC45),
-    palette = listOf(Color(0xFF4A86E3), Color(0xFFD55B9F), Color(0xFFBB772B), Color(0xFF8A73EA), Color(0xFF15A5C0)),
+    background = Color(0xFF0A0B1F),
+    surface = Color(0xFF12132E),
+    surfaceVariant = Color(0xFF1C1E3D),
+    outline = Color(0xFF2A2C4A),
+    text = Color(0xFFE8E8F5),
+    muted = Color(0xFF9B9DB8),
+    primary = Color(0xFFA855F7),
+    onPrimary = Color(0xFF0A0B1F),
+    accentInk = Color(0xFFC084FC),
+    blocked = Color(0xFFFF5C5C),
+    onBlocked = Color(0xFF0A0B1F),
+    warning = Color(0xFFFBBF24),
+    palette = listOf(Color(0xFF60A5FA), Color(0xFFE879F9), Color(0xFFA78BFA), Color(0xFF22D3EE), Color(0xFF818CF8)),
     isDark = true,
 )
 

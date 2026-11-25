@@ -173,7 +173,7 @@ object Blocklists {
         _sources.update { list -> list.filterNot { it.id == id } }
         _states.update { it - id }
         scope.launch {
-            lock.withLock { file(id).delete() }
+            lock.withLock { file(id).delete(); cleaned(id).delete() }
             rebuild()
         }
     }
@@ -195,17 +195,35 @@ object Blocklists {
         val source = _sources.value.firstOrNull { it.id == id } ?: return
         set(id) { it.copy(busy = true, failed = false) }
         try {
-            val tmp = File(dir, "$id.tmp")
-            fetch(source.url, tmp)
-            val entries = tmp.useLines { BlocklistParser.parse(it, HashSet()) }
+            val raw = File(dir, "$id.raw.tmp")
+            val cleanedTmp = File(dir, "$id.domains.tmp")
+            fetch(source.url, raw)
+            // Stream-parse off the UI path; yield often so large lists do not freeze the process.
+            val domains = HashSet<String>(65_536)
+            val entries = raw.useLines { lines ->
+                BlocklistParser.parse(lines, domains, yieldEvery = YIELD_EVERY) {
+                    kotlinx.coroutines.yield()
+                }
+            }
+            raw.delete()
             if (entries == 0) throw IOException("no domains in ${source.url}")
+            cleanedTmp.bufferedWriter().use { out ->
+                var n = 0
+                for (d in domains) {
+                    out.append(d).append('\n')
+                    n++
+                    if (n % YIELD_EVERY == 0) kotlinx.coroutines.yield()
+                }
+            }
             lock.withLock {
                 // Deleted while it downloaded: drop it rather than leave a file nothing points to.
                 if (_sources.value.none { it.id == id }) {
-                    tmp.delete()
+                    cleanedTmp.delete()
                     return
                 }
-                tmp.renameTo(file(id)) || throw IOException("could not save $id")
+                file(id).delete()
+                cleaned(id).delete()
+                cleanedTmp.renameTo(cleaned(id)) || throw IOException("could not save $id")
             }
             val now = System.currentTimeMillis()
             prefs.edit().putInt("n.$id", entries).putLong("t.$id", now).apply()
@@ -220,7 +238,7 @@ object Blocklists {
         val conn = URL(url).openConnection() as HttpURLConnection
         conn.connectTimeout = TIMEOUT_MS
         conn.readTimeout = TIMEOUT_MS
-        conn.setRequestProperty("User-Agent", "Warden")
+        conn.setRequestProperty("User-Agent", "RonGuard")
         try {
             if (conn.responseCode != HttpURLConnection.HTTP_OK) throw IOException("HTTP ${conn.responseCode}")
             conn.inputStream.use { input -> to.outputStream().use { input.copyTo(it) } }
@@ -231,13 +249,20 @@ object Blocklists {
 
     /** Re-reads every enabled list into one matcher; swapped in atomically when ready. */
     private suspend fun rebuild() = lock.withLock {
-        val all = HashSet<String>()
+        val all = HashSet<String>(65_536)
         _states.value.filterValues { it.enabled }.keys.forEach { id ->
-            file(id).takeIf { it.exists() }?.useLines { BlocklistParser.parse(it, all) }
+            val f = cleaned(id).takeIf { it.exists() } ?: file(id).takeIf { it.exists() }
+            f?.useLines { lines ->
+                BlocklistParser.parse(lines, all, yieldEvery = YIELD_EVERY) {
+                    kotlinx.coroutines.yield()
+                }
+            }
         }
         matcher = DomainSet(all)
         Rules.reset("") // lists affect every app
     }
+
+    private fun cleaned(id: String) = File(dir, "$id.domains")
 
     /** ponytail: weekly refresh checked on start, unmetered networks only; WorkManager scheduling comes later. */
     private suspend fun refreshStale() {
@@ -257,6 +282,7 @@ object Blocklists {
     private const val TAG = "Blocklists"
     private const val TIMEOUT_MS = 30_000
     private const val STALE_DAYS = 7L
+    private const val YIELD_EVERY = 4_000
 }
 
 /** A list address Warden will fetch: https with a host. Plain http could be tampered with on the way. */

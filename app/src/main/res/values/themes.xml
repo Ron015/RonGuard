@@ -1,7 +1,9 @@
 <resources>
-    <!-- Window colour matches the Compose background so launch doesn't flash white in dark mode. -->
+    <!-- Window colour matches the Compose background so launch doesn't flash. -->
     <style name="Theme.RonGuard" parent="android:Theme.Material.Light.NoActionBar">
         <item name="android:windowBackground">@color/ronguard_background</item>
+        <item name="android:statusBarColor">@color/ronguard_background</item>
+        <item name="android:navigationBarColor">@color/ronguard_background</item>
     </style>
-    <color name="ronguard_background">#F4F4EE</color>
+    <color name="ronguard_background">#F0F0F8</color>
 </resources>

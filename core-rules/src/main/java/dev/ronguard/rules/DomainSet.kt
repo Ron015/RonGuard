@@ -20,20 +20,35 @@ class DomainSet(private val domains: Set<String>) {
 
 /** Reads hosts files, plain or wildcard domain lists, and the domain-only subset of adblock syntax. */
 object BlocklistParser {
-    private val VALID = Regex("""[a-z0-9_]([a-z0-9_-]*[a-z0-9_])?(\.[a-z0-9_]([a-z0-9_-]*[a-z0-9_])?)+""")
     private val HOST_IPS = setOf("0.0.0.0", "127.0.0.1", "::", "::1", "0:0:0:0:0:0:0:0")
     private val RESERVED = setOf("localhost.localdomain", "local.localdomain", "ip6-localhost.localdomain")
 
-    /** Adds every domain found in [lines] to [into]; returns how many lines yielded a domain. */
-    fun parse(lines: Sequence<String>, into: MutableSet<String>): Int = lines.count { line ->
-        domainOf(line)?.let { into.add(it) } != null
+    /**
+     * Adds every domain found in [lines] to [into]; returns how many lines yielded a domain.
+     * [onProgress] is invoked every [yieldEvery] input lines so callers can yield the coroutine
+     * and keep the UI responsive on multi-million line lists.
+     */
+    fun parse(
+        lines: Sequence<String>,
+        into: MutableSet<String>,
+        yieldEvery: Int = 0,
+        onProgress: (() -> Unit)? = null,
+    ): Int {
+        var seen = 0
+        var added = 0
+        for (line in lines) {
+            seen++
+            if (domainOf(line)?.let { into.add(it) } == true) added++
+            if (yieldEvery > 0 && onProgress != null && seen % yieldEvery == 0) onProgress()
+        }
+        return added
     }
 
     fun domainOf(raw: String): String? {
         val line = raw.substringBefore('#').trim()
         if (isNoise(line)) return null
         val domain = candidate(line)?.removePrefix("*.")?.removePrefix(".")?.lowercase() ?: return null
-        return domain.takeIf { VALID.matches(it) && it !in RESERVED }
+        return domain.takeIf { isValidDomain(it) && it !in RESERVED }
     }
 
     // Blank lines, adblock comments/headers and allow-rules carry no domain to block.
@@ -46,5 +61,20 @@ object BlocklistParser {
             if (parts.size >= 2 && parts[0] in HOST_IPS) parts[1] else null
         }
         else -> line
+    }
+
+    /** Fast domain check without Regex — large lists were freezing on Regex.matches per line. */
+    private fun isValidDomain(s: String): Boolean {
+        if (s.length < 3 || s.length > 253 || '.' !in s) return false
+        if (s.startsWith('.') || s.endsWith('.') || s.startsWith('-') || s.endsWith('-')) return false
+        if (".." in s) return false
+        var i = 0
+        while (i < s.length) {
+            val c = s[i]
+            val ok = c in 'a'..'z' || c in '0'..'9' || c == '-' || c == '_' || c == '.'
+            if (!ok) return false
+            i++
+        }
+        return true
     }
 }

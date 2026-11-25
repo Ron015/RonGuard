@@ -119,45 +119,85 @@ fun LogScreen(
     var searchQuery by rememberSaveable { mutableStateOf("") }
     var selectedIds by remember { mutableStateOf(setOf<String>()) }
     var detailEvent by remember { mutableStateOf<NetEvent?>(null) }
-    // Lazy window: start small, grow as the user scrolls (avoids composing hundreds of rows at once).
-    var visibleCount by remember { mutableIntStateOf(DeviceMem.logPageSize) }
-    val events by remember { History.recent(DeviceMem.recentRows) }.collectAsState(emptyList())
+    val pageSize = DeviceMem.logPageSize
+    // True DB paging: only pages the user has scrolled to are held in memory.
+    var items by remember { mutableStateOf<List<NetEvent>>(emptyList()) }
+    var nextOffset by remember { mutableIntStateOf(0) }
+    var endReached by remember { mutableStateOf(false) }
+    var loadingMore by remember { mutableStateOf(false) }
+    val totalCount by remember { History.totalCount() }.collectAsState(0)
+    // Small live window so new events appear without reloading the whole history.
+    val live by remember { History.recent(pageSize) }.collectAsState(emptyList())
     val selecting = selectedIds.isNotEmpty()
-    val shown = remember(events, filter, searchQuery) {
-        val q = searchQuery.trim().lowercase(Locale.getDefault())
-        events.asSequence()
-            .filter(filter.keep)
-            .filter { e ->
-                if (q.isEmpty()) true
-                else {
-                    (e.domain?.lowercase(Locale.getDefault())?.contains(q) == true) ||
-                        e.target.lowercase(Locale.getDefault()).contains(q) ||
-                        appLabel(e.uid).lowercase(Locale.getDefault()).contains(q) ||
-                        e.kind.lowercase(Locale.getDefault()).contains(q)
-                }
-            }
-            .toList()
-    }
-    // Cap what LazyColumn actually receives; scroll loads more.
-    val page = remember(shown, visibleCount) { shown.take(visibleCount) }
-    val blocked = remember(events) { events.count { it.blocked } }
     val scope = rememberCoroutineScope()
     val listState = rememberLazyListState()
 
-    // Reset page size when filter/search changes so we don't keep a huge window after narrowing.
-    LaunchedEffect(filter, searchQuery) {
-        visibleCount = DeviceMem.logPageSize
+    fun matches(e: NetEvent, q: String): Boolean {
+        if (q.isEmpty()) return true
+        return (e.domain?.lowercase(Locale.getDefault())?.contains(q) == true) ||
+            e.target.lowercase(Locale.getDefault()).contains(q) ||
+            appLabel(e.uid).lowercase(Locale.getDefault()).contains(q) ||
+            e.kind.lowercase(Locale.getDefault()).contains(q)
     }
-    // When near the end of the visible page, reveal the next chunk.
-    LaunchedEffect(listState, page.size, shown.size) {
+
+    val shown = remember(items, filter, searchQuery) {
+        val q = searchQuery.trim().lowercase(Locale.getDefault())
+        items.asSequence().filter(filter.keep).filter { matches(it, q) }.toList()
+    }
+    val blocked = remember(items) { items.count { it.blocked } }
+
+    suspend fun loadMore() {
+        if (loadingMore || endReached) return
+        loadingMore = true
+        try {
+            val batch = History.loadPage(nextOffset, pageSize)
+            if (batch.isEmpty()) {
+                endReached = true
+            } else {
+                val have = items.mapTo(HashSet(items.size * 2)) { it.id }
+                val add = batch.filter { it.id !in have }
+                items = items + add
+                nextOffset += batch.size
+                if (batch.size < pageSize) endReached = true
+            }
+        } finally {
+            loadingMore = false
+        }
+    }
+
+    // Initial page + reset when filter/search changes (still pages the full DB).
+    LaunchedEffect(filter, searchQuery) {
+        items = emptyList()
+        nextOffset = 0
+        endReached = false
+        loadMore()
+    }
+
+    // Prepend brand-new live events (by id) without dropping paged history.
+    LaunchedEffect(live) {
+        if (live.isEmpty()) return@LaunchedEffect
+        val have = items.mapTo(HashSet()) { it.id }
+        val fresh = live.filter { it.id !in have }
+        if (fresh.isNotEmpty()) items = fresh + items
+    }
+
+    // Near the end of the list → fetch the next DB page (only on-screen rows are composed).
+    LaunchedEffect(listState, shown.size, endReached, loadingMore) {
         snapshotFlow {
             val info = listState.layoutInfo
             val last = info.visibleItemsInfo.lastOrNull()?.index ?: 0
             last to info.totalItemsCount
         }.collect { (last, total) ->
-            if (total > 0 && last >= total - 4 && visibleCount < shown.size) {
-                visibleCount = (visibleCount + DeviceMem.logPageSize).coerceAtMost(shown.size)
+            if (!endReached && !loadingMore && total > 0 && last >= total - 5) {
+                loadMore()
             }
+        }
+    }
+
+    // If a filter leaves few matches, keep paging until we find more or hit the end.
+    LaunchedEffect(shown.size, endReached, loadingMore, items.size) {
+        if (!endReached && !loadingMore && shown.size < pageSize && items.size >= pageSize) {
+            loadMore()
         }
     }
 
@@ -222,7 +262,7 @@ fun LogScreen(
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Spacing.s)) {
                     LiveDot(running)
                     Text(
-                        stringResource(if (running) R.string.log_live else R.string.log_paused, events.size, blocked).uppercase(),
+                        stringResource(if (running) R.string.log_live else R.string.log_paused, totalCount.coerceAtLeast(items.size), blocked).uppercase(),
                         style = Warden.type.caption.tabular(),
                         color = c.muted,
                     )
@@ -280,9 +320,9 @@ fun LogScreen(
         }
         HorizontalDivider(color = c.outline)
         LogList(
-            page = page,
-            totalMatched = shown.size,
-            noEvents = events.isEmpty(),
+            page = shown,
+            totalMatched = if (searchQuery.isBlank() && filter == Filter.All) totalCount else shown.size,
+            noEvents = totalCount == 0 && items.isEmpty(),
             listState = listState,
             time = time,
             appLabel = appLabel,

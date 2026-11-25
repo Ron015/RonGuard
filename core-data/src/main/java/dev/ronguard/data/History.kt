@@ -117,6 +117,18 @@ object History {
             .distinctUntilChanged()
             .conflate()
 
+    /** Total rows in history (for log "showing X of Y"). */
+    fun totalCount(): Flow<Int> = dao.totalCount().whileVisible().distinctUntilChanged()
+
+    /**
+     * One page of history for the log, newest first. Call with increasing [offset] to walk the
+     * entire table without loading it all into memory at once.
+     */
+    suspend fun loadPage(offset: Int, limit: Int = DeviceMem.logPageSize): List<NetEvent> =
+        withContext(Dispatchers.IO) {
+            dao.recentPage(limit, offset).map { it.toEvent() }
+        }
+
     /** When this process started: the "this session" range. */
     val sessionStart = System.currentTimeMillis()
 

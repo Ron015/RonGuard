@@ -68,19 +68,19 @@ object DeviceMem {
             maxPending = 1_500
             recentRows = 200
             appsRows = 60
-            logPageSize = 30
+            logPageSize = 40
             mapRows = 400
-            keepRows = 15_000
-            keepDays = 5L
+            keepRows = 50_000
+            keepDays = 14L
             blockedRows = 30
         } else {
             maxPending = 12_000
             recentRows = 800
             appsRows = 120
-            logPageSize = 50
+            logPageSize = 60
             mapRows = 3_000
-            keepRows = 100_000
-            keepDays = 21L
+            keepRows = 250_000
+            keepDays = 45L
             blockedRows = 80
         }
     }

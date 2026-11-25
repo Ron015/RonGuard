@@ -72,6 +72,13 @@ interface ConnectionDao {
     @Query("SELECT * FROM connections ORDER BY time DESC LIMIT :limit")
     fun recent(limit: Int): Flow<List<ConnectionRow>>
 
+    /** One page for the log screen (newest first). OFFSET lets us page through the whole table. */
+    @Query("SELECT * FROM connections ORDER BY time DESC LIMIT :limit OFFSET :offset")
+    suspend fun recentPage(limit: Int, offset: Int): List<ConnectionRow>
+
+    @Query("SELECT COUNT(*) FROM connections")
+    fun totalCount(): Flow<Int>
+
     @Query(
         """SELECT COALESCE(SUM(blocked), 0) AS blocked, COALESCE(SUM(kind != 'dns'), 0) AS connections,
            COUNT(DISTINCT uid) AS apps, COUNT(DISTINCT domain) AS domains,

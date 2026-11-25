@@ -81,7 +81,7 @@ fun IconBadge(@DrawableRes icon: Int, color: Color, modifier: Modifier = Modifie
     }
 }
 
-/** Pill with a live dot. On = lime fill with ink, dot breathing; off = quiet neutral. */
+/** Pill with a live dot. On = purple fill with ink, dot breathing; off = quiet neutral. */
 @Composable
 fun StatusChip(on: Boolean, label: String, modifier: Modifier = Modifier) {
     val c = Warden.colors
@@ -109,7 +109,7 @@ fun SectionLabel(text: String, modifier: Modifier = Modifier) {
     Text(text.uppercase(), modifier, style = Warden.type.caption, color = Warden.colors.muted)
 }
 
-/** Filter chip: lime fill with ink when selected, hairline outline otherwise. 36dp tall in a 48dp target. */
+/** Filter chip: purple fill with ink when selected, hairline outline otherwise. 36dp tall in a 48dp target. */
 @Composable
 fun FilterChip(label: String, selected: Boolean, onClick: () -> Unit, modifier: Modifier = Modifier) {
     val c = Warden.colors
@@ -235,7 +235,7 @@ fun ChoiceChips(options: List<String>, selected: Int, onSelect: (Int) -> Unit, m
     }
 }
 
-/** Segmented control: a lime pill slides between options. For small, exclusive settings. */
+/** Segmented control: a accent pill slides between options. For small, exclusive settings. */
 @Composable
 fun SegmentedControl(options: List<String>, selected: Int, onSelect: (Int) -> Unit, modifier: Modifier = Modifier) {
     val c = Warden.colors
