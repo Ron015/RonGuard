@@ -52,9 +52,9 @@ val LightColors = WardenColors(
     primary = Color(0xFF7C3AED),
     onPrimary = Color(0xFFFFFFFF),
     accentInk = Color(0xFF5B21B6),
-    blocked = Color(0xFFDC2626),
+    blocked = Color(0xFFC02020),
     onBlocked = Color(0xFFFFFFFF),
-    warning = Color(0xFFB45309),
+    warning = Color(0xFFA84A08),
     palette = listOf(Color(0xFF2563EB), Color(0xFFC026D3), Color(0xFF7C3AED), Color(0xFF0891B2), Color(0xFF4F46E5)),
     isDark = false,
 )
