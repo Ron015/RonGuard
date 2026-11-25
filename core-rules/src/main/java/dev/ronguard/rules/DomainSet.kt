@@ -1,7 +1,5 @@
 package dev.ronguard.rules
 
-import kotlinx.coroutines.yield
-
 /**
  * Blocklist domains with subdomain (suffix) matching: "ads.com" also covers "x.ads.com".
  * ponytail: a plain HashSet, ~100 bytes per entry (~20MB at 200k); a reverse-label trie if memory bites.
@@ -25,21 +23,11 @@ object BlocklistParser {
     private val HOST_IPS = setOf("0.0.0.0", "127.0.0.1", "::", "::1", "0:0:0:0:0:0:0:0")
     private val RESERVED = setOf("localhost.localdomain", "local.localdomain", "ip6-localhost.localdomain")
 
-    /**
-     * Adds every domain found in [lines] to [into]; returns how many lines yielded a domain.
-     * Yields every [yieldEvery] lines so large lists stay cooperative on a coroutine.
-     */
-    suspend fun parse(
-        lines: Sequence<String>,
-        into: MutableSet<String>,
-        yieldEvery: Int = 4_000,
-    ): Int {
-        var seen = 0
+    /** Adds every domain found in [lines] to [into]; returns how many lines yielded a domain. */
+    fun parse(lines: Sequence<String>, into: MutableSet<String>): Int {
         var added = 0
         for (line in lines) {
-            seen++
             if (domainOf(line)?.let { into.add(it) } == true) added++
-            if (yieldEvery > 0 && seen % yieldEvery == 0) yield()
         }
         return added
     }
