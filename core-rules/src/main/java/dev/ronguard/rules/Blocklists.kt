@@ -214,7 +214,6 @@ object Blocklists {
         }
     }
 
-
     /** @return false if the source was removed during download. */
     private suspend fun swapCleanedFile(id: String, cleanedTmp: File): Boolean = lock.withLock {
         if (_sources.value.none { it.id == id }) {
@@ -252,8 +251,6 @@ object Blocklists {
         Rules.reset("") // lists affect every app
     }
 
-
-
     private suspend fun writeDomains(to: File, domains: Set<String>) {
         val out = to.bufferedWriter()
         try {
@@ -271,17 +268,22 @@ object Blocklists {
     /** Parse a list file cooperatively (yields so large lists do not stall the process). */
     private suspend fun parseFile(file: File, into: MutableSet<String>): Int {
         val reader = file.bufferedReader()
-        var seen = 0
-        var added = 0
         try {
-            while (true) {
-                val line = reader.readLine() ?: break
-                seen++
-                if (BlocklistParser.domainOf(line)?.let { into.add(it) } == true) added++
-                if (seen % YIELD_EVERY == 0) kotlinx.coroutines.yield()
-            }
+            return consumeLines(reader, into)
         } finally {
             reader.close()
+        }
+    }
+
+    private suspend fun consumeLines(reader: java.io.BufferedReader, into: MutableSet<String>): Int {
+        var seen = 0
+        var added = 0
+        var line = reader.readLine()
+        while (line != null) {
+            if (BlocklistParser.domainOf(line)?.let(into::add) == true) added++
+            seen++
+            if (seen % YIELD_EVERY == 0) kotlinx.coroutines.yield()
+            line = reader.readLine()
         }
         return added
     }

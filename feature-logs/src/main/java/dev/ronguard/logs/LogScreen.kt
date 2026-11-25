@@ -201,7 +201,6 @@ fun LogScreen(
         if (shouldLoadMore(needMoreMatches)) loadMore()
     }
 
-
     val time = remember { DateFormat.getTimeInstance(DateFormat.MEDIUM) }
     val dateTime = remember { DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.MEDIUM) }
 

@@ -1,5 +1,7 @@
 package dev.ronguard.rules
 
+import android.os.Process
+
 import android.content.Context
 import android.content.SharedPreferences
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -52,6 +54,7 @@ object AppRules {
 
     /** Does [uid] get blocked on the current network? Safe from any thread. */
     fun blocks(uid: Int, cellular: Boolean): Boolean {
+        if (uid == Process.myUid()) return false
         if (_lockdown.value && !isCore(uid) && uid !in _allowed.value) return true
         val rule = _rules.value[uid] ?: return false
         return if (cellular) rule.blockCellular else rule.blockWifi

@@ -1,5 +1,7 @@
 package dev.ronguard.engine
 
+import android.os.Process
+
 import java.util.concurrent.atomic.AtomicInteger
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -72,6 +74,8 @@ object Engine {
     }
 
     internal fun record(e: NetEvent) {
+        // Never log RonGuard itself — it is excluded from the VPN and is not a "user" app.
+        if (e.uid == Process.myUid()) return
         if (e.blocked) blocked.incrementAndGet()
         synchronized(pendingNew) {
             val max = DeviceMem.maxPending

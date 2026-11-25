@@ -439,7 +439,15 @@ class RonGuardVpnService : VpnService(), Bridge {
         val toOurDns = host(dst) == DNS4 || host(dst) == DNS6
         val names = (domains.split(',') + probableDomains.split(',')).map(::normalize).filter { it.isNotEmpty() }
         // An app talking to its own encrypted resolver would skip every rule below, so that's refused too.
-        val bypass = !toOurDns && uid != Process.myUid() && Dns.config.value.stopBypass &&
+        // RonGuard itself always passes and is never logged (also disallowed from the VPN tun).
+        if (uid == Process.myUid()) {
+            return Mark().apply {
+                pidcsv = if (toOurDns) Backend.Base else Backend.Exit
+                this.cid = cid
+                this.uid = uid.toString()
+            }
+        }
+        val bypass = !toOurDns && Dns.config.value.stopBypass &&
             Dns.isBypass(names, host(dst), port(dst))
         val route = if (toOurDns) Route.Direct else Routing.route(uid)
         // Tor carries TCP only, so a Tor app's UDP (QUIC, mostly) is refused; it retries over TCP.
@@ -502,18 +510,21 @@ class RonGuardVpnService : VpnService(), Bridge {
     /** Rules, plus looking up a public encrypted-DNS host (the first step of going around Warden). */
     private fun queryBlocked(uid: String, name: String): Boolean {
         val id = uid.toIntOrNull() ?: UNKNOWN_UID
+        if (id == Process.myUid()) return false
         if (Rules.blocks(id, listOf(name), cellular)) return true
-        return id != Process.myUid() && Dns.config.value.stopBypass && Dns.isResolverHost(name)
+        return Dns.config.value.stopBypass && Dns.isResolverHost(name)
     }
 
     override fun onResponse(s: DNSSummary?) {
         val name = normalize(s?.qName ?: return)
         if (name.isEmpty()) return
+        val eventUid = s.uid.toIntOrNull() ?: UNKNOWN_UID
+        if (eventUid == Process.myUid()) return
         Engine.record(
             NetEvent(
                 id = "d" + ids.incrementAndGet(),
                 time = System.currentTimeMillis(),
-                uid = s.uid.toIntOrNull() ?: UNKNOWN_UID,
+                uid = eventUid,
                 kind = "dns",
                 domain = name,
                 target = s.rData.ifEmpty { "no answer" },

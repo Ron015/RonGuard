@@ -1,5 +1,7 @@
 package dev.ronguard.rules
 
+import android.os.Process
+
 import android.content.Context
 import android.content.SharedPreferences
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -61,6 +63,7 @@ object Rules {
 
     /** Should a flow or query from [uid] to any of [names] be blocked? Safe from any thread. */
     fun blocks(uid: Int, names: List<String>, cellular: Boolean): Boolean {
+        if (uid == Process.myUid()) return false
         val rules = _domains.value
         names.firstNotNullOfOrNull { lookup(rules, "$uid:", it) }?.let { return it == Verdict.Block }
         if (AppRules.blocks(uid, cellular)) return true
