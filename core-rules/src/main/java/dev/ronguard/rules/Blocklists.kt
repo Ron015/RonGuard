@@ -200,31 +200,11 @@ object Blocklists {
             fetch(source.url, raw)
             // Stream-parse off the UI path; yield often so large lists do not freeze the process.
             val domains = HashSet<String>(65_536)
-            val entries = raw.useLines { lines ->
-                BlocklistParser.parse(lines, domains, yieldEvery = YIELD_EVERY) {
-                    kotlinx.coroutines.yield()
-                }
-            }
+            val entries = parseFile(raw, domains)
             raw.delete()
             if (entries == 0) throw IOException("no domains in ${source.url}")
-            cleanedTmp.bufferedWriter().use { out ->
-                var n = 0
-                for (d in domains) {
-                    out.append(d).append('\n')
-                    n++
-                    if (n % YIELD_EVERY == 0) kotlinx.coroutines.yield()
-                }
-            }
-            lock.withLock {
-                // Deleted while it downloaded: drop it rather than leave a file nothing points to.
-                if (_sources.value.none { it.id == id }) {
-                    cleanedTmp.delete()
-                    return
-                }
-                file(id).delete()
-                cleaned(id).delete()
-                cleanedTmp.renameTo(cleaned(id)) || throw IOException("could not save $id")
-            }
+            writeDomains(cleanedTmp, domains)
+            if (!swapCleanedFile(id, cleanedTmp)) return
             val now = System.currentTimeMillis()
             prefs.edit().putInt("n.$id", entries).putLong("t.$id", now).apply()
             set(id) { it.copy(entries = entries, updatedAt = now, busy = false) }
@@ -232,6 +212,19 @@ object Blocklists {
             Log.w(TAG, "download $id failed", e)
             set(id) { it.copy(busy = false, failed = true) }
         }
+    }
+
+
+    /** @return false if the source was removed during download. */
+    private suspend fun swapCleanedFile(id: String, cleanedTmp: File): Boolean = lock.withLock {
+        if (_sources.value.none { it.id == id }) {
+            cleanedTmp.delete()
+            return@withLock false
+        }
+        file(id).delete()
+        cleaned(id).delete()
+        cleanedTmp.renameTo(cleaned(id)) || throw IOException("could not save $id")
+        true
     }
 
     private fun fetch(url: String, to: File) {
@@ -250,16 +243,47 @@ object Blocklists {
     /** Re-reads every enabled list into one matcher; swapped in atomically when ready. */
     private suspend fun rebuild() = lock.withLock {
         val all = HashSet<String>(65_536)
-        _states.value.filterValues { it.enabled }.keys.forEach { id ->
+        val ids = _states.value.filterValues { it.enabled }.keys.toList()
+        for (id in ids) {
             val f = cleaned(id).takeIf { it.exists() } ?: file(id).takeIf { it.exists() }
-            f?.useLines { lines ->
-                BlocklistParser.parse(lines, all, yieldEvery = YIELD_EVERY) {
-                    kotlinx.coroutines.yield()
-                }
-            }
+            if (f != null) parseFile(f, all)
         }
         matcher = DomainSet(all)
         Rules.reset("") // lists affect every app
+    }
+
+
+
+    private suspend fun writeDomains(to: File, domains: Set<String>) {
+        val out = to.bufferedWriter()
+        try {
+            var n = 0
+            for (d in domains) {
+                out.append(d).append('\n')
+                n++
+                if (n % YIELD_EVERY == 0) kotlinx.coroutines.yield()
+            }
+        } finally {
+            out.close()
+        }
+    }
+
+    /** Parse a list file cooperatively (yields so large lists do not stall the process). */
+    private suspend fun parseFile(file: File, into: MutableSet<String>): Int {
+        val reader = file.bufferedReader()
+        var seen = 0
+        var added = 0
+        try {
+            while (true) {
+                val line = reader.readLine() ?: break
+                seen++
+                if (BlocklistParser.domainOf(line)?.let { into.add(it) } == true) added++
+                if (seen % YIELD_EVERY == 0) kotlinx.coroutines.yield()
+            }
+        } finally {
+            reader.close()
+        }
+        return added
     }
 
     private fun cleaned(id: String) = File(dir, "$id.domains")

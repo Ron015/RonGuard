@@ -132,6 +132,8 @@ fun LogScreen(
     val scope = rememberCoroutineScope()
     val listState = rememberLazyListState()
 
+    fun shouldLoadMore(extra: Boolean): Boolean = extra && !endReached && !loadingMore
+
     fun matches(e: NetEvent, q: String): Boolean {
         if (q.isEmpty()) return true
         return (e.domain?.lowercase(Locale.getDefault())?.contains(q) == true) ||
@@ -188,18 +190,17 @@ fun LogScreen(
             val last = info.visibleItemsInfo.lastOrNull()?.index ?: 0
             last to info.totalItemsCount
         }.collect { (last, total) ->
-            if (!endReached && !loadingMore && total > 0 && last >= total - 5) {
-                loadMore()
-            }
+            val nearEnd = total > 0 && last >= total - 5
+            if (shouldLoadMore(nearEnd)) loadMore()
         }
     }
 
     // If a filter leaves few matches, keep paging until we find more or hit the end.
     LaunchedEffect(shown.size, endReached, loadingMore, items.size) {
-        if (!endReached && !loadingMore && shown.size < pageSize && items.size >= pageSize) {
-            loadMore()
-        }
+        val needMoreMatches = shown.size < pageSize && items.size >= pageSize
+        if (shouldLoadMore(needMoreMatches)) loadMore()
     }
+
 
     val time = remember { DateFormat.getTimeInstance(DateFormat.MEDIUM) }
     val dateTime = remember { DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.MEDIUM) }
@@ -262,7 +263,11 @@ fun LogScreen(
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Spacing.s)) {
                     LiveDot(running)
                     Text(
-                        stringResource(if (running) R.string.log_live else R.string.log_paused, totalCount.coerceAtLeast(items.size), blocked).uppercase(),
+                        stringResource(
+                            if (running) R.string.log_live else R.string.log_paused,
+                            totalCount.coerceAtLeast(items.size),
+                            blocked,
+                        ).uppercase(),
                         style = Warden.type.caption.tabular(),
                         color = c.muted,
                     )

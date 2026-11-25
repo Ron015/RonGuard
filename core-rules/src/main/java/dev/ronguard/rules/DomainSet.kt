@@ -1,5 +1,7 @@
 package dev.ronguard.rules
 
+import kotlinx.coroutines.yield
+
 /**
  * Blocklist domains with subdomain (suffix) matching: "ads.com" also covers "x.ads.com".
  * ponytail: a plain HashSet, ~100 bytes per entry (~20MB at 200k); a reverse-label trie if memory bites.
@@ -25,21 +27,19 @@ object BlocklistParser {
 
     /**
      * Adds every domain found in [lines] to [into]; returns how many lines yielded a domain.
-     * [onProgress] is invoked every [yieldEvery] input lines so callers can yield the coroutine
-     * and keep the UI responsive on multi-million line lists.
+     * Yields every [yieldEvery] lines so large lists stay cooperative on a coroutine.
      */
-    fun parse(
+    suspend fun parse(
         lines: Sequence<String>,
         into: MutableSet<String>,
-        yieldEvery: Int = 0,
-        onProgress: (() -> Unit)? = null,
+        yieldEvery: Int = 4_000,
     ): Int {
         var seen = 0
         var added = 0
         for (line in lines) {
             seen++
             if (domainOf(line)?.let { into.add(it) } == true) added++
-            if (yieldEvery > 0 && onProgress != null && seen % yieldEvery == 0) onProgress()
+            if (yieldEvery > 0 && seen % yieldEvery == 0) yield()
         }
         return added
     }
@@ -51,11 +51,9 @@ object BlocklistParser {
         return domain.takeIf { isValidDomain(it) && it !in RESERVED }
     }
 
-    // Blank lines, adblock comments/headers and allow-rules carry no domain to block.
     private fun isNoise(line: String) = line.isEmpty() || line[0] == '!' || line[0] == '[' || line.startsWith("@@")
 
     private fun candidate(line: String): String? = when {
-        // Adblock: only plain "||domain^" rules make sense at the DNS level.
         line.startsWith("||") -> line.removePrefix("||").takeIf { it.endsWith('^') && '$' !in it && '/' !in it }?.dropLast(1)
         ' ' in line || '\t' in line -> line.split(' ', '\t').filter { it.isNotEmpty() }.let { parts ->
             if (parts.size >= 2 && parts[0] in HOST_IPS) parts[1] else null
@@ -65,16 +63,11 @@ object BlocklistParser {
 
     /** Fast domain check without Regex — large lists were freezing on Regex.matches per line. */
     private fun isValidDomain(s: String): Boolean {
-        if (s.length < 3 || s.length > 253 || '.' !in s) return false
-        if (s.startsWith('.') || s.endsWith('.') || s.startsWith('-') || s.endsWith('-')) return false
-        if (".." in s) return false
-        var i = 0
-        while (i < s.length) {
-            val c = s[i]
-            val ok = c in 'a'..'z' || c in '0'..'9' || c == '-' || c == '_' || c == '.'
-            if (!ok) return false
-            i++
-        }
-        return true
+        if (s.length !in 3..253 || '.' !in s || ".." in s) return false
+        val first = s.first()
+        val last = s.last()
+        if (first == '.' || first == '-') return false
+        if (last == '.' || last == '-') return false
+        return s.all { it.isLetterOrDigit() || it == '-' || it == '_' || it == '.' }
     }
 }
