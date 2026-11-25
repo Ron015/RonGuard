@@ -26,14 +26,11 @@ object BlocklistParser {
     /** Adds every domain found in [lines] to [into]; returns how many lines yielded a domain. */
     fun parse(lines: Sequence<String>, into: MutableSet<String>): Int {
         var added = 0
-    
         for (line in lines) {
             val domain = domainOf(line) ?: continue
-    
             into.add(domain)
             added++
         }
-    
         return added
     }
 
